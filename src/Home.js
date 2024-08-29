@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import muncher from './muncher.jpeg';
 import './App.css';
-import { auth } from "./firebase";
-
 
 function Home() {
   const navigate = useNavigate();
@@ -35,21 +33,21 @@ function Home() {
   };
 
   return (
-    <div>
-      <img src={muncher} className="App-logo" alt="logo" />
+    <div className="home-container">
+      <img src={muncher} className="home-logo" alt="logo" />
       <h1>Welcome to DataMuncher!</h1>
-      <form onSubmit={handleSignIn}>
-        <div>
+      <form onSubmit={handleSignIn} className="login-form">
+        <div className="form-group">
           <label>Email:</label>
-          <input type="email" value={email} onChange={handleEmailChange} />
+          <input type="email" value={email} onChange={handleEmailChange} required />
         </div>
-        <div>
+        <div className="form-group">
           <label>Password:</label>
-          <input type="password" value={password} onChange={handlePasswordChange} />
+          <input type="password" value={password} onChange={handlePasswordChange} required />
         </div>
-        <button type="submit">Sign In</button>
+        <button type="submit" className="btn">Sign In</button>
+        <button onClick={() => navigate("/signup")} className="btn secondary">Sign Up</button>
       </form>
-      <button onClick={() => navigate("/signup")}>Sign Up</button>
     </div>
   );
 }

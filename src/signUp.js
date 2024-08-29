@@ -1,10 +1,15 @@
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebase";
+import muncher from './muncher.jpeg';
+import './App.css';
 
 function SignUp() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const auth = getAuth();
 
   const handleEmailChange = (e) => {
@@ -17,31 +22,43 @@ function SignUp() {
 
   const handleSignUp = (e) => {
     e.preventDefault();
+    setError(""); // Clear previous error message
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
         console.log("User signed up:", user);
+        navigate("/"); // Redirect to sign-in page
       })
       .catch((error) => {
         const errorCode = error.code;
         const errorMessage = error.message;
         console.error("Error signing up:", errorCode, errorMessage);
+        if (errorCode === 'auth/email-already-in-use') {
+          setError("An account with this email already exists.");
+        } else {
+          setError(errorMessage);
+        }
+        console.log("Error state set to:", error);
       });
   };
 
   return (
-    <div>
-      <h1>Sign Up Page</h1>
-      <form onSubmit={handleSignUp}>
-        <div>
+    <div className="signup-container">
+      <Link to="/">
+        <img src={muncher} className="home-logo" alt="logo" />
+      </Link>
+      <h1>Sign Up</h1>
+      <form onSubmit={handleSignUp} className="signup-form">
+        <div className="form-group">
           <label>Email:</label>
-          <input type="email" value={email} onChange={handleEmailChange} />
+          <input type="email" value={email} onChange={handleEmailChange} required />
         </div>
-        <div>
+        <div className="form-group">
           <label>Password:</label>
-          <input type="password" value={password} onChange={handlePasswordChange} />
+          <input type="password" value={password} onChange={handlePasswordChange} required />
         </div>
-        <button type="submit">Sign Up</button>
+        {error && <p className="error-message">{error}</p>}
+        <button type="submit" className="btn">Sign Up</button>
       </form>
     </div>
   );
