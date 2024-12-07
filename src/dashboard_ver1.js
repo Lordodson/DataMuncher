@@ -8,16 +8,23 @@ import _ from 'lodash';
 import { Bar, Line, Pie, Scatter, Radar } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+// import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import { BoxPlotController, BoxAndWiskers } from '@sgratzl/chartjs-chart-boxplot';
+// import { HeatmapController, HeatmapElement } from 'chartjs-chart-heatmap';
+// import { BubbleController, BubbleElement } from 'chartjs-chart-bubble';
+// import { SankeyController, Flow } from 'chartjs-chart-sankey';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
+// ChartJS.register(TreemapController, TreemapElement);
 ChartJS.register(BoxPlotController, BoxAndWiskers);
-
+// ChartJS.register(HeatmapController, HeatmapElement);
+// ChartJS.register(BubbleController, BubbleElement);
+// ChartJS.register(SankeyController, Flow);
 
 const Dashboard = () => {
-  const [data, setData] = useState(null); 
-  const [summary, setSummary] = useState(null); 
-  const [graphData, setGraphData] = useState({}); 
+  const [data, setData] = useState(null); // For storing CSV data
+  const [summary, setSummary] = useState(null); // For storing summary of data
+  const [graphData, setGraphData] = useState({}); // For storing graph data
 
   // File upload
   const handleFileUpload = (event) => {
