@@ -4,12 +4,23 @@ import Home from "./Home";
 import SignUp from "./signUp";
 import Dashboard from "./dashboard";
 import About from "./about";
+import './App.css'; // Ensure you have this import for your CSS
 
 function App() {
   return (
     <Router>
-      <nav>
-        <Link to="/about">About</Link>
+      <nav className="navbar">
+        <ul className="navbar-list">
+          <li className="navbar-item">
+            <Link to="/" className="navbar-link">Home</Link>
+          </li>
+          <li className="navbar-item">
+            <Link to="/signup" className="navbar-link">Sign Up</Link>
+          </li>
+          <li className="navbar-item">
+            <Link to="/about" className="navbar-link">About</Link>
+          </li>
+        </ul>
       </nav>
       <Routes>
         <Route path="/" element={<Home />} />

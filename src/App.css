@@ -222,3 +222,124 @@ p {
   color: #666;
   line-height: 1.6;
 }
+
+.dashboard {
+  padding: 20px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.summary-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.summary-icon {
+  font-size: 2rem;
+  margin-right: 10px;
+}
+
+.summary-content h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.summary-content p {
+  margin: 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.summary-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  overflow: hidden; /* Ensure content does not overflow */
+  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+}
+
+.summary-content {
+  flex: 1; /* Ensure content takes up available space */
+  overflow: hidden; /* Ensure content does not overflow */
+  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+}
+
+.summary-content h3, .summary-content p {
+  margin: 0;
+  font-size: 1.2rem;
+  white-space: nowrap; /* Prevent text from wrapping */
+  overflow: hidden; /* Ensure content does not overflow */
+  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+}
+
+.chart-container {
+  position: relative;
+  max-height: 1000px; /* Set a maximum height */
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 100px; /* Add padding to create space between the graph and the card borders */
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* overflow: auto; Enable scrolling if content exceeds max height */
+}
+
+.chart-container h2 {
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+/* Navbar styling */
+.navbar {
+  background-color: #333;
+  padding: 1rem;
+}
+
+.navbar-list {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-item {
+  margin: 0;
+}
+
+.navbar-link {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.navbar-link:hover {
+  background-color: #555;
+  border-radius: 5px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .navbar-list {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .navbar-link {
+    padding: 1rem;
+  }
+}
