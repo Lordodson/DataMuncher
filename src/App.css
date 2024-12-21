@@ -343,3 +343,37 @@ p {
     padding: 1rem;
   }
 }
+
+.predictions-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 600px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.predictions-header {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.analysis-box {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #eef;
+  border-radius: 5px;
+}
+
+.analysis-text {
+  font-size: 1em;
+  color: #555;
+}
+
+.prediction-result {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #007bff;
+}

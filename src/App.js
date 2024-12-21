@@ -4,7 +4,8 @@ import Home from "./Home";
 import SignUp from "./signUp";
 import Dashboard from "./dashboard";
 import About from "./about";
-import './App.css'; // Ensure you have this import for your CSS
+import Advanced from "./Advanced";
+import './App.css';
 
 function App() {
   return (
@@ -20,6 +21,12 @@ function App() {
           <li className="navbar-item">
             <Link to="/about" className="navbar-link">About</Link>
           </li>
+          <li className="navbar-item">
+            <Link to="/dashboard" className="navbar-link">Dashboard</Link>
+          </li>
+          <li className="navbar-item">
+            <Link to="/Advanced" className="navbar-link">Advanced</Link>
+          </li>
         </ul>
       </nav>
       <Routes>
@@ -27,6 +34,7 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/about" element={<About />} />
+        <Route path="/Advanced" element={<Advanced />} /> 
       </Routes>
     </Router>
   );
