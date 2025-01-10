@@ -48,7 +48,7 @@ const Dashboard = () => {
           generateSummary(parsedData);
           generateGraphs(parsedData);
         },
-        header: true, // First row as headers
+        header: true, 
         skipEmptyLines: true,
       });
     } else {
@@ -56,31 +56,26 @@ const Dashboard = () => {
     }
   };
 
-
-  // Function to clean and summarize data
   const generateSummary = (data) => {
     if (data.length === 0) return;
-  
-    // Remove duplicates
+
     const uniqueData = _.uniqWith(data, _.isEqual);
     console.log("Duplicates removed");
   
-    // Handle missing values
     const cleanedData = uniqueData.map(row => {
       const cleanedRow = {};
       for (const key in row) {
-        cleanedRow[key] = row[key] || 'N/A'; // Fill missing values with 'N/A'
+        cleanedRow[key] = row[key] || 'N/A'; 
       }
       return cleanedRow;
     });
     console.log("Missing values handled");
   
-    // Standardize data formats 
     const standardizedData = cleanedData.map(row => {
       const standardizedRow = { ...row };
       for (const key in row) {
         if (Date.parse(row[key])) {
-          standardizedRow[key] = new Date(row[key]).toISOString(); // Convert dates to ISO format
+          standardizedRow[key] = new Date(row[key]).toISOString(); 
         }
       }
       return standardizedRow;
@@ -90,7 +85,6 @@ const Dashboard = () => {
     const columns = Object.keys(standardizedData[0]);
     const rowCount = standardizedData.length;
   
-    // Combine all numeric values into a single array
     const allNumericData = [];
     standardizedData.forEach(row => {
       columns.forEach(column => {
@@ -179,12 +173,9 @@ const Dashboard = () => {
     console.log("Summary generated:", overview);
   };
 
-
-  // Function to generate graph data
   const generateGraphs = (data) => {
     if (data.length === 0) return;
 
-    // Determine the most useful columns for graphs
     const columns = Object.keys(data[0]);
     let selectedColumnX = null;
     let selectedColumnY = null;
@@ -203,7 +194,6 @@ const Dashboard = () => {
 
     if (!selectedColumnX || !selectedColumnY) return;
 
-    // Prepare data for the graphs
     const labels = data.map((row, index) => `Row ${index + 1}`);
     const valuesX = data.map(row => Number(row[selectedColumnX]));
     const valuesY = data.map(row => Number(row[selectedColumnY]));
@@ -272,7 +262,6 @@ const Dashboard = () => {
     });
   };
 
-  // PDF export
   const SummaryPDF = ({ summary }) => (
     <Document>
       <Page size="A4" style={{ padding: 20 }}>

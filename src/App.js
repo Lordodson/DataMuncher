@@ -5,6 +5,7 @@ import SignUp from "./signUp";
 import Dashboard from "./dashboard";
 import About from "./about";
 import Advanced from "./Advanced";
+import PyEdit from "./PyEdit";
 import './App.css';
 
 function App() {
@@ -27,6 +28,9 @@ function App() {
           <li className="navbar-item">
             <Link to="/Advanced" className="navbar-link">Advanced</Link>
           </li>
+          <li className="navbar-item">
+            <Link to="/PyEdit" className="navbar-link">PyEdit</Link>
+          </li>
         </ul>
       </nav>
       <Routes>
@@ -35,6 +39,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/about" element={<About />} />
         <Route path="/Advanced" element={<Advanced />} /> 
+        <Route path="/PyEdit" element={<PyEdit />} /> 
       </Routes>
     </Router>
   );

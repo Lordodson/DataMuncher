@@ -12,8 +12,8 @@ function About() {
       </Link>
       <h1>About DataMuncher</h1>
       <p>DataMuncher is still in development.</p>
-      <p>DataMuncher is a powerful tool designed to help you manage and analyze your data efficiently. Whether you're a data scientist, analyst, or just someone who loves working with data, DataMuncher provides the tools you need to get the job done.</p>
-      <p>With features like data import, visualization, and advanced analytics, DataMuncher is your go-to solution for all your data needs.</p>
+      <p>DataMuncher is a powerful tool designed to help you analyze data efficiently. Whether you're a data scientist, analyst, or just someone who loves working with data, DataMuncher provides a quick analysis.</p>
+      <p>With features like data import, visualization, and advanced analytics, DataMuncher is your go-to solution for data analysis needs.</p>
     </div>
   );
 }
