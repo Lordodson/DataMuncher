@@ -94,7 +94,11 @@ h1 {
 }
 
 .btn {
-  width: 100%;
+  width: 25%;
+  margin-left:auto;
+  margin-right:auto;
+  justify-content: center;
+  display: block;
   padding: 10px;
   background-color: #007bff;
   color: white;
@@ -266,34 +270,33 @@ p {
   padding: 20px;
   display: flex;
   align-items: center;
-  overflow: hidden; /* Ensure content does not overflow */
-  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+  overflow: hidden; 
+  text-overflow: ellipsis; 
 }
 
 .summary-content {
-  flex: 1; /* Ensure content takes up available space */
-  overflow: hidden; /* Ensure content does not overflow */
-  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+  flex: 1; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
 }
 
 .summary-content h3, .summary-content p {
   margin: 0;
   font-size: 1.2rem;
-  white-space: nowrap; /* Prevent text from wrapping */
-  overflow: hidden; /* Ensure content does not overflow */
-  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
 }
 
 .chart-container {
   position: relative;
-  max-height: 1000px; /* Set a maximum height */
+  max-height: 1000px; 
   width: 100%;
   margin-bottom: 20px;
-  padding: 100px; /* Add padding to create space between the graph and the card borders */
+  padding: 100px; 
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  /* overflow: auto; Enable scrolling if content exceeds max height */
 }
 
 .chart-container h2 {
@@ -302,7 +305,6 @@ p {
   color: #333;
 }
 
-/* Navbar styling */
 .navbar {
   position: fixed;
   top: 0;
@@ -317,17 +319,15 @@ p {
   justify-content: space-between;
 }
 
-/* Hamburger menu button */
 .menu-toggle {
   background: none;
   border: none;
   color: white;
   font-size: 24px;
   cursor: pointer;
-  display: none; /* Hidden by default */
+  display: none; 
 }
 
-/* Navbar list */
 .navbar-list {
   display: flex;
   flex-wrap: nowrap;
@@ -336,7 +336,6 @@ p {
   list-style: none;
 }
 
-/* Navbar items */
 .navbar-item {
   margin: 0;
 }
@@ -353,15 +352,14 @@ p {
   background-color: #575757;
 }
 
-/* Responsive styles */
 @media (max-width: 768px) {
   .menu-toggle {
-    display: block; /* Show hamburger menu on small screens */
+    display: block; 
   }
 
   .navbar-list {
-    display: none; /* Hide navbar links by default */
-    flex-direction: column; /* Stack links vertically */
+    display: none; 
+    flex-direction: column; 
     background-color: #333;
     position: absolute;
     top: 60px;
@@ -370,13 +368,12 @@ p {
   }
 
   .navbar-list.open {
-    display: flex; /* Show links when menu is open */
+    display: flex; 
   }
 }
 
 .main-content{padding-top: 40px;}
 
-/* Responsive design */
 @media (max-width: 768px) {
   .navbar-list {
     flex-direction: column;
@@ -422,4 +419,55 @@ p {
   color: #007bff;
 }
 
+.popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  z-index: 1000;
+  max-width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
 
+.popup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.close-btn {
+  position: absolute;
+  align-self: flex-end;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.data-table th {
+  background-color: #f2f2f2;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}

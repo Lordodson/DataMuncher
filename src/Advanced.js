@@ -18,7 +18,7 @@ const Advanced = () => {
     const [knnModel, setKnnModel] = useState(null);
     const [knnPrediction, setKnnPrediction] = useState(null);
     const [knnAnalysis, setKnnAnalysis] = useState(null);
-
+    const [showPopup, setShowPopup] = useState(false); // State for pop-up visibility
 
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
@@ -44,6 +44,7 @@ const Advanced = () => {
                         createMeanPrediction(cleanedData);
                         createLinearRegression(cleanedData, featureColumns, labelColumn);
                         createKNNModel(cleanedData, featureColumns, labelColumn);
+                        setShowPopup(false); // Reset pop-up visibility
                     }
                 },
                 header: true,
@@ -463,6 +464,38 @@ const Advanced = () => {
             <div className="import-box">
                 <input type="file" accept=".csv" onChange={handleFileUpload} className="file-input" />
             </div>
+            {data && (
+                <>
+                    <button className="btn" onClick={() => setShowPopup(true)}>Review Uploaded CSV - Cleaned & Tuned</button>
+                    
+                    {showPopup && (
+                    <div className="popup">
+                        <div className="popup-content">
+                        <button className="close-btn" onClick={() => setShowPopup(false)}>X</button>
+                        <h2>Uploaded CSV Data</h2>
+                        <table className="data-table">
+                            <thead>
+                            <tr>
+                                {Object.keys(data[0]).map((key, index) => (
+                                <th key={index}>{key}</th>
+                                ))}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {data.map((row, index) => (
+                                <tr key={index}>
+                                {Object.values(row).map((value, cellIndex) => (
+                                    <td key={cellIndex}>{value}</td>
+                                ))}
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                    )}
+                </>
+        )}
             {renderMeanPrediction()}
             {renderLinearRegressionCard()}
             {renderKNNPrediction()}

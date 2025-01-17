@@ -27,9 +27,10 @@ const SummaryCard = ({ title, value, icon, tooltip }) => (
 );
 
 const Dashboard = () => {
-  const [data, setData] = useState(null); 
-  const [summary, setSummary] = useState(null); 
-  const [graphData, setGraphData] = useState({}); 
+  const [data, setData] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [graphData, setGraphData] = useState({});
+  const [showPopup, setShowPopup] = useState(false); // State for pop-up visibility
 
   // File upload
   const handleFileUpload = (event) => {
@@ -40,6 +41,7 @@ const Dashboard = () => {
       setData(null);
       setSummary(null);
       setGraphData({});
+      setShowPopup(false); // Reset pop-up visibility
 
       Papa.parse(file, {
         complete: (result) => {
@@ -48,7 +50,7 @@ const Dashboard = () => {
           generateSummary(parsedData);
           generateGraphs(parsedData);
         },
-        header: true, 
+        header: true,
         skipEmptyLines: true,
       });
     } else {
@@ -297,6 +299,38 @@ const Dashboard = () => {
           <h2>Import Data</h2>
           <input type="file" accept=".csv" onChange={handleFileUpload} />
         </div>
+        {data && (
+          <>
+            <button className="btn" onClick={() => setShowPopup(true)}>Review Uploaded CSV - Cleaned & Tuned</button>
+            {showPopup && (
+              <div className="popup">
+                <div className="popup-content">
+                  <button className="close-btn" onClick={() => setShowPopup(false)}>X</button>
+                  <h2>Uploaded CSV Data</h2>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        {Object.keys(data[0]).map((key, index) => (
+                          <th key={index}>{key}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.map((row, index) => (
+                        <tr key={index}>
+                          {Object.values(row).map((value, cellIndex) => (
+                            <td key={cellIndex}>{value}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
         {summary && (
           <>
             <h2>Data Overview</h2>
