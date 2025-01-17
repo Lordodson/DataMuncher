@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Papa from 'papaparse';
 import * as ss from 'simple-statistics';  
 import { Link } from 'react-router-dom';
+import KNN from 'ml-knn';
 
 const Advanced = () => {
     const [data, setData] = useState(null);
@@ -14,6 +15,10 @@ const Advanced = () => {
     const [predictionType, setPredictionType] = useState(null); 
     const [manualPrediction, setManualPrediction] = useState(null);
     const [featureColumns, setFeatureColumns] = useState([]);
+    const [knnModel, setKnnModel] = useState(null);
+    const [knnPrediction, setKnnPrediction] = useState(null);
+    const [knnAnalysis, setKnnAnalysis] = useState(null);
+
 
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
@@ -38,6 +43,7 @@ const Advanced = () => {
                         setData(cleanedData);
                         createMeanPrediction(cleanedData);
                         createLinearRegression(cleanedData, featureColumns, labelColumn);
+                        createKNNModel(cleanedData, featureColumns, labelColumn);
                     }
                 },
                 header: true,
@@ -69,6 +75,29 @@ const Advanced = () => {
         });
     };
     
+    const preprocessDataForKNN = (data) => {
+        return data.map(row => {
+            const processedRow = {};
+            Object.keys(row).forEach(key => {
+                let value = row[key];
+                if (typeof value === 'string') {
+                    value = value.replace(/[^0-9.-]+/g, ''); 
+                }
+                processedRow[key] = value === "" || isNaN(value) ? value : parseFloat(value);
+            });
+            return processedRow;
+        });
+    };
+
+    const selectColumnsForKNN = (data) => {
+        const { numericColumns } = detectColumns(data);
+        const featureColumns = numericColumns.slice(0, -1); 
+        const labelColumn = numericColumns.slice(-1)[0]; 
+    
+        return { featureColumns, labelColumn };
+    };
+    
+
     const detectColumns = (data) => {
         const columns = Object.keys(data[0] || {});
         const numericColumns = columns.filter(column => 
@@ -140,6 +169,39 @@ const Advanced = () => {
         setManualPrediction({ x, y });
         return y;
     };
+
+    const createKNNModel = (data, featureColumns, labelColumn) => {
+        if (!featureColumns || featureColumns.length === 0 || !labelColumn) {
+            console.error("Invalid feature or label columns for KNN.");
+            return;
+        }
+    
+        try {
+            const features = data.map(row => featureColumns.map(col => row[col]));
+            const labels = data.map(row => row[labelColumn]);
+    
+            // Create KNN model with default k=3
+            const knn = new KNN(features, labels, { k: 3 });
+            setKnnModel(knn);
+    
+            // Get the first data point's features for the initial prediction
+            const initialFeature = features[0]; // you can adjust this to use any point
+            const initialPrediction = knn.predict([initialFeature]);
+    
+            // Update the state with initial prediction
+            setKnnPrediction(initialPrediction[0]);
+    
+            const knnAnalysisText = `KNN model created with k=3. The model uses ${featureColumns.length} features to predict the label.`;
+            setKnnAnalysis(knnAnalysisText);
+    
+            console.log("KNN Model:", knn);
+            console.log("Initial KNN Prediction:", initialPrediction[0]);
+        } catch (error) {
+            console.error("Error creating KNN model:", error);
+            setKnnModel(null);
+        }
+    };
+    
 
     const createMeanPrediction = (data) => {
         try {
@@ -228,44 +290,98 @@ const Advanced = () => {
         return correlation;
     };
     
+    const renderKNNPrediction = () => {
+        if (!knnModel) return null;
+    
+        return (
+            <div className="predictions-card">
+                <h3 className="predictions-header">KNN Prediction Result</h3>
+                <div className="analysis-box">
+                    <p className="analysis-text">{knnAnalysis}</p>
+                    <p className="analysis-text">
+                        <strong>What this prediction means:</strong> The KNN model uses the values of the nearest 3 neighbors 
+                        (based on feature similarity) in the dataset to predict the label for the given input. It calculates 
+                        the average or majority label (depending on regression or classification) among these neighbors.
+                    </p>
+                    <p className="analysis-text">
+                        <strong>Interpreting the result:</strong> If the predicted value is close to one of the data points in 
+                        your dataset, it means the input is similar to that data point based on the features provided. If the 
+                        prediction seems far from expected, it may indicate that the input lies outside the range of your 
+                        training data.
+                    </p>
+                    <p className="analysis-text">
+                        <strong>Limitations:</strong> KNN predictions are sensitive to the choice of <code>k</code> (the number 
+                        of neighbors) and the scale of features. Ensure that features are appropriately scaled to avoid bias 
+                        towards features with larger ranges.
+                    </p>
+                </div>
+                <div className="manual-prediction">
+                    <label htmlFor="knn-x">Enter a value for prediction:</label>
+                    <input
+                        id="knn-x"
+                        type="number"
+                        placeholder="E.g., 50, 100, 150"
+                        onChange={(e) => {
+                            const x = parseFloat(e.target.value);
+                            const prediction = knnModel.predict([x]);
+                            setKnnPrediction(prediction);
+                        }}
+                    />
+                </div>
+                {knnPrediction && (
+                    <div className="manual-prediction-result">
+                        <strong>Prediction:</strong> {knnPrediction}
+                    </div>
+                )}
+            </div>
+        );
+    };
+    
+
     const renderCorrelationCard = () => {
-        if (meanPrediction === null || !modelPrediction || featureColumns.length === 0) return null;
-    
-        const firstRow = data[0];
-        const xValue = firstRow[featureColumns[0]]; 
-        const regressionPrediction = modelPrediction.m * xValue + modelPrediction.b;
-        const regressionPredictions = data.map(row => row[featureColumns[0]] * modelPrediction.m + modelPrediction.b);
-        const correlation = calculateCorrelation(meanPrediction, regressionPredictions);
-    
-        let correlationText = `The correlation between the mean-based prediction and the linear regression model's predictions is ${correlation.toFixed(2)}.`;
-    
-        if (correlation > 0.8) {
-            correlationText += " This indicates a strong positive relationship between the two models.";
-        } else if (correlation < -0.8) {
-            correlationText += " This indicates a strong negative relationship between the two models.";
-        } else if (correlation > 0.4) {
-            correlationText += " This indicates a moderate positive relationship.";
-        } else if (correlation < -0.4) {
-            correlationText += " This indicates a moderate negative relationship.";
-        } else {
-            correlationText += " This indicates a weak or no relationship between the two models.";
-        }
+        if (!meanPrediction || !modelPrediction || !knnModel || !featureColumns.length) return null;
     
         return (
             <div className="predictions-card">
                 <h3 className="predictions-header">Correlation and Analysis</h3>
                 <div className="analysis-box">
-                    {/* <p className="analysis-text">
-                        <strong>Mean-Based Prediction:</strong> {meanPrediction.toFixed(2)}
+                    <p className="analysis-text">
+                        <strong>Mean-Based Prediction:</strong> 
+                        This model calculates the average value of the target variable. It's a simple benchmark that represents the central tendency of the data. 
+                        If other models deviate significantly from the mean, it suggests they are capturing patterns beyond a simple average.
                     </p>
                     <p className="analysis-text">
-                        <strong>Linear Regression Prediction = </strong> {regressionPrediction.toFixed(2)} */}
-                    {/* </p> */}
-                    <p className="analysis-text">{correlationText}</p>
+                        <strong>Linear Regression Prediction:</strong> 
+                        The regression model attempts to capture linear relationships between the input features and the target variable. 
+                        A close match between the regression and mean predictions may indicate a weak or non-existent linear trend, while significant differences suggest a strong linear relationship.
+                    </p>
+                    <p className="analysis-text">
+                        <strong>KNN Prediction:</strong> 
+                        The K-Nearest Neighbors (KNN) model bases its predictions on the similarity between data points. This approach is especially useful for capturing non-linear patterns that regression may miss. 
+                        If KNN predictions closely align with the mean or regression, it may indicate that the underlying relationships in the data are either simple or linear.
+                    </p>
+                    <p className="analysis-text">
+                        <strong>Insights and Correlations:</strong> 
+                        Observing the relationships between predictions can reveal useful information:
+                        <ul>
+                            <li>If all three predictions are similar, the data may lack complex patterns, and simpler models might suffice.</li>
+                            <li>Disparities between regression and KNN predictions might indicate non-linear relationships in the data.</li>
+                            <li>A significant difference between mean-based and other models suggests that the data has predictive patterns beyond randomness or central tendency.</li>
+                        </ul>
+                    </p>
+                </div>
+                <div className="additional-insights">
+                    <p>
+                        <em>
+                            Use these interpretations to understand how your models interact with the data. 
+                            If you notice discrepancies, consider revisiting feature engineering, model parameters, or even exploring alternative models.
+                        </em>
+                    </p>
                 </div>
             </div>
         );
     };
+    
 
     const renderMeanPrediction = () => {
         if (meanPrediction === null) return null;
@@ -340,13 +456,16 @@ const Advanced = () => {
                 <Link to="/">
                     <img src={muncher} className="App-logo" alt="logo" />
                 </Link>
-                <h1 className="page-title">Advanced</h1>
+                <h1 
+                    style={{fontSize: 'clamp(0.2rem, 4vw, 3rem)'}}
+                className="page-title">Advanced ML Models</h1>
             </header>
             <div className="import-box">
                 <input type="file" accept=".csv" onChange={handleFileUpload} className="file-input" />
             </div>
             {renderMeanPrediction()}
             {renderLinearRegressionCard()}
+            {renderKNNPrediction()}
             {renderCorrelationCard()}
         </div>
     );

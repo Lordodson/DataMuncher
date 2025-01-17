@@ -289,7 +289,7 @@ const Dashboard = () => {
         <Link to="/">
           <img src={muncher} className="App-logo" alt="logo" />
         </Link>
-        <h1>Dashboard</h1>
+        <h1 style={{fontSize: 'clamp(0.2rem, 4vw, 3rem)'}}>Dashboard</h1>
       </header>
       <div className="App-content">
         <p>Welcome to your dashboard!</p>

@@ -66,7 +66,9 @@ const PyEdit = () => {
         <Link to="/">
           <img src={muncher} className="App-logo" alt="logo" />
         </Link>
-        <h1 className="page-title">PyEdit</h1>
+        <h1
+          style={{fontSize: 'clamp(0.2rem, 4vw, 3rem)'}} 
+        className="page-title">PyEdit</h1>
       </header>
 
       {/* Main Content */}

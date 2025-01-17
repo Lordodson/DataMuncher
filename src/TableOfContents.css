@@ -1,0 +1,80 @@
+/* Full page layout */
+.pageContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full height of the screen */
+}
+
+/* Wrapper for TOC and Content */
+.layout {
+    display: flex;
+    flex-direction: row;
+    height: 100%; /* Full height of the page */
+}
+
+/* Table of Contents (TOC) styles */
+.toc {
+    position: fixed;
+    top: 220px; /* Below the header */
+    left: 0;
+    width: 100px; /* Width of the TOC */
+    background-color: #f9f9f9;
+    border-right: 1px solid #ccc; /* Border on the right of TOC */
+    padding: 10px;
+    height: calc(100vh - 100px); /* Full height minus header space */
+    overflow-y: auto;
+    z-index: 10; /* Ensure TOC stays on top */
+}
+
+/* Main Content styles */
+.content {
+    margin-left: 120px; /* Space for TOC on the left */
+    padding: 20px;
+    overflow-y: auto;
+    width: calc(100% - 220px); /* Take the remaining space on the right */
+    box-sizing: border-box;
+    height: 100%; /* Full height */
+}
+
+/* List style for TOC */
+.toc ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.toc ul li {
+    margin: 5px 0;
+}
+
+.toc ul li a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+.toc ul li a:hover {
+    text-decoration: underline;
+}
+
+/* For smaller screens, adjust TOC layout */
+@media (max-width: 768px) {
+    /* .layout { */
+        /* flex-direction: column; Stack TOC and content vertically */
+    /* } */
+    .toc {
+        position: fixed;
+        top: 180px; /* Below the header */
+        left: 0;
+        width: 100px; /* Width of the TOC */
+        background-color: #f9f9f9;
+        border-right: 1px solid #ccc; /* Border on the right of TOC */
+        padding: 10px;
+        height: calc(100vh - 100px); /* Full height minus header space */
+        overflow-y: auto;
+        z-index: 10; /* Ensure TOC stays on top */
+    }
+
+    /* .content { */
+        /* margin-left: 150px; Remove left margin for content */
+        /* width: 90%; Take full width */
+    /* } */
+}

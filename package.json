@@ -22,6 +22,7 @@
     "jspdf": "^2.5.2",
     "lodash": "^4.17.21",
     "ml-cart": "^2.1.1",
+    "ml-knn": "^3.0.0",
     "ml-random-forest": "^2.1.0",
     "ml-regression": "^6.2.0",
     "ml-regression-multivariate-linear": "^2.0.4",
