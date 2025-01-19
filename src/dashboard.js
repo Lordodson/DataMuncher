@@ -296,7 +296,7 @@ const Dashboard = () => {
       <div className="App-content">
         <p>Welcome to your dashboard!</p>
         <div className="import-box">
-          <h2>Import Data</h2>
+          <h2>Import CSV Data Only</h2>
           <input type="file" accept=".csv" onChange={handleFileUpload} />
         </div>
         {data && (

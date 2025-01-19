@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import muncher from './muncher.jpeg';
 import './App.css';
+import { Link } from "react-router-dom";
+
 
 function Home() {
   const navigate = useNavigate();
@@ -47,6 +49,7 @@ function Home() {
         </div>
         <button type="submit" className="btn">Sign In</button>
         <button onClick={() => navigate("/signup")} className="btn secondary">Sign Up</button>
+        <Link className="about-link" to="/about">About DataMuncher</Link>
       </form>
     </div>
   );

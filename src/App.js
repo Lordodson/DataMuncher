@@ -13,7 +13,7 @@ function Navbar() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const hideNavbarRoutes = ["/signup", "/"];
+  const hideNavbarRoutes = ["/signup", "/", "/about"];
   const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
 
   if (shouldHideNavbar) return null;

@@ -29,6 +29,9 @@ const SignIn = () => {
         placeholder="Password"
       />
       <button type="submit">Sign In</button>
+      <li>
+        <Link to="/about">About DataMuncher</Link>
+      </li>
     </form>
   );
 };

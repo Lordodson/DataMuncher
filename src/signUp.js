@@ -22,12 +22,12 @@ function SignUp() {
 
   const handleSignUp = (e) => {
     e.preventDefault();
-    setError(""); // Clear previous error message
+    setError(""); 
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
         console.log("User signed up:", user);
-        navigate("/"); // Redirect to sign-in page
+        navigate("/"); 
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -59,6 +59,7 @@ function SignUp() {
         </div>
         {error && <p className="error-message">{error}</p>}
         <button type="submit" className="btn">Sign Up</button>
+        <Link className="about-link" to="/about">About DataMuncher</Link>
       </form>
     </div>
   );

@@ -462,6 +462,7 @@ const Advanced = () => {
                 className="page-title">Advanced ML Models</h1>
             </header>
             <div className="import-box">
+                <h2>Import CSV Data Only</h2>
                 <input type="file" accept=".csv" onChange={handleFileUpload} className="file-input" />
             </div>
             {data && (
