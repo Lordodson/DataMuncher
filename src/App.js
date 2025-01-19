@@ -32,9 +32,9 @@ function Navbar() {
         <li className="navbar-item">
           <Link to="/" className="navbar-link" onClick={handleLinkClick}>Home</Link>
         </li>
-        <li className="navbar-item">
+        {/* <li className="navbar-item">
           <Link to="/signup" className="navbar-link" onClick={handleLinkClick}>Sign Up</Link>
-        </li>
+        </li> */}
         <li className="navbar-item">
           <Link to="/about" className="navbar-link" onClick={handleLinkClick}>About</Link>
         </li>
