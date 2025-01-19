@@ -1,5 +1,5 @@
 import muncher from './muncher.jpeg';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import * as ss from 'simple-statistics';  
 import { Link } from 'react-router-dom';
@@ -18,43 +18,75 @@ const Advanced = () => {
     const [knnModel, setKnnModel] = useState(null);
     const [knnPrediction, setKnnPrediction] = useState(null);
     const [knnAnalysis, setKnnAnalysis] = useState(null);
-    const [showPopup, setShowPopup] = useState(false); // State for pop-up visibility
+    const [showPopup, setShowPopup] = useState(false); 
+    const [displayData, setDisplayData] = useState([]);
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 50; 
+    const [labelColumn, setLabelColumn] = useState(null);
 
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file && file.name.endsWith('.csv')) {
-            Papa.parse(file, {
-                complete: (result) => {
-                    const rawData = result.data;
-                    const cleanedData = preprocessData(rawData);
-    
-                    const { featureColumns, labelColumn } = selectColumns(cleanedData);
-                    setFeatureColumns(featureColumns);  
-                    const validationIssues = validateData(cleanedData, featureColumns, labelColumn);
-    
-                    if (validationIssues.length > 0) {
-                        console.error("Validation Issues:", validationIssues);
-                        alert("Validation Errors:\n" + validationIssues.join("\n"));
-                    } else {
-                        console.log("Features:", featureColumns);
-                        console.log("Label:", labelColumn);
-                        console.log("Cleaned and Validated Data:", cleanedData);
-    
-                        setData(cleanedData);
-                        createMeanPrediction(cleanedData);
-                        createLinearRegression(cleanedData, featureColumns, labelColumn);
-                        createKNNModel(cleanedData, featureColumns, labelColumn);
-                        setShowPopup(false); // Reset pop-up visibility
-                    }
-                },
-                header: true,
-                skipEmptyLines: true,
-            });
+          Papa.parse(file, {
+            complete: (result) => {
+              const rawData = result.data;
+              const cleanedData = preprocessData(rawData);
+      
+              const { featureColumns, labelColumn } = selectColumns(cleanedData);
+              setFeatureColumns(featureColumns);  
+              setLabelColumn(labelColumn); 
+              const validationIssues = validateData(cleanedData, featureColumns, labelColumn);
+      
+              if (validationIssues.length > 0) {
+                console.error("Validation Issues:", validationIssues);
+                alert("Validation Errors:\n" + validationIssues.join("\n"));
+              } else {
+                console.log("Features:", featureColumns);
+                console.log("Label:", labelColumn);
+                console.log("Cleaned and Validated Data:", cleanedData);
+      
+                setData(cleanedData);
+                setDisplayData(cleanedData.slice(0, itemsPerPage)); 
+                createMeanPrediction(cleanedData.slice(0, itemsPerPage)); 
+                createLinearRegression(cleanedData.slice(0, itemsPerPage), featureColumns, labelColumn); 
+                createKNNModel(cleanedData.slice(0, itemsPerPage), featureColumns, labelColumn); 
+                setShowPopup(false); 
+              }
+            },
+            header: true,
+            skipEmptyLines: true,
+          });
         } else {
-            alert("Please upload a valid CSV file.");
+          alert("Please upload a valid CSV file.");
         }
-    };
+      };
     
+    const loadMoreData = () => {
+    const nextPage = page + 1;
+    const newData = data.slice(0, nextPage * itemsPerPage);
+    setDisplayData(newData);
+    setPage(nextPage);
+    };
+
+    useEffect(() => {
+        const handleScroll = () => {
+          if (window.innerHeight + document.documentElement.scrollTop === document.documentElement.offsetHeight) {
+            loadMoreData();
+          }
+        };
+      
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [page, data]);
+    
+    useEffect(() => {
+        if (displayData.length > 0 && labelColumn) {
+          createMeanPrediction(displayData);
+          createLinearRegression(displayData, featureColumns, labelColumn);
+          createKNNModel(displayData, featureColumns, labelColumn);
+        }
+    }, [displayData, labelColumn]);
+
     const preprocessData = (data) => {
         if (data && data.length > 0) {
             const columns = Object.keys(data[0]);
@@ -181,15 +213,15 @@ const Advanced = () => {
             const features = data.map(row => featureColumns.map(col => row[col]));
             const labels = data.map(row => row[labelColumn]);
     
-            // Create KNN model with default k=3
+            
             const knn = new KNN(features, labels, { k: 3 });
             setKnnModel(knn);
     
-            // Get the first data point's features for the initial prediction
-            const initialFeature = features[0]; // you can adjust this to use any point
+            
+            const initialFeature = features[0]; 
             const initialPrediction = knn.predict([initialFeature]);
     
-            // Update the state with initial prediction
+            
             setKnnPrediction(initialPrediction[0]);
     
             const knnAnalysisText = `KNN model created with k=3. The model uses ${featureColumns.length} features to predict the label.`;

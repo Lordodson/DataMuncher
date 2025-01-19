@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import './App.css';
 import muncher from './muncher.jpeg';
 import Papa from 'papaparse';
@@ -11,6 +11,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { BoxPlotController, BoxAndWiskers } from '@sgratzl/chartjs-chart-boxplot';
 import { FaChartBar, FaChartLine, FaChartPie, FaChartArea } from 'react-icons/fa';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
+
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 ChartJS.register(BoxPlotController, BoxAndWiskers);
@@ -30,25 +31,20 @@ const Dashboard = () => {
   const [data, setData] = useState(null);
   const [summary, setSummary] = useState(null);
   const [graphData, setGraphData] = useState({});
-  const [showPopup, setShowPopup] = useState(false); // State for pop-up visibility
+  const [showPopup, setShowPopup] = useState(false); 
+  const [displayData, setDisplayData] = useState([]);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 50; 
 
-  // File upload
+  
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
-
     if (file && file.name.endsWith('.csv')) {
-      // Clear previous data
-      setData(null);
-      setSummary(null);
-      setGraphData({});
-      setShowPopup(false); // Reset pop-up visibility
-
       Papa.parse(file, {
         complete: (result) => {
           const parsedData = result.data;
           setData(parsedData);
-          generateSummary(parsedData);
-          generateGraphs(parsedData);
+          setDisplayData(parsedData.slice(0, itemsPerPage)); 
         },
         header: true,
         skipEmptyLines: true,
@@ -57,6 +53,31 @@ const Dashboard = () => {
       alert("Please upload a valid CSV file.");
     }
   };
+
+useEffect(() => {
+  const handleScroll = () => {
+    if (window.innerHeight + document.documentElement.scrollTop === document.documentElement.offsetHeight) {
+      loadMoreData();
+    }
+  };
+
+  window.addEventListener('scroll', handleScroll);
+  return () => window.removeEventListener('scroll', handleScroll);
+}, [page, data]);
+
+  const loadMoreData = () => {
+    const nextPage = page + 1;
+    const newData = data.slice(0, nextPage * itemsPerPage);
+    setDisplayData(newData);
+    setPage(nextPage);
+  };
+
+  useEffect(() => {
+    if (displayData.length > 0) {
+      generateSummary(displayData);
+      generateGraphs(displayData);
+    }
+  }, [displayData]);
 
   const generateSummary = (data) => {
     if (data.length === 0) return;
@@ -260,7 +281,7 @@ const Dashboard = () => {
           },
         ],
       },
-      // Possibly add more graph types here...
+      
     });
   };
 
