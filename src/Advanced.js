@@ -1,9 +1,13 @@
 import muncher from './muncher.jpeg';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Papa from 'papaparse';
 import * as ss from 'simple-statistics';  
 import { Link } from 'react-router-dom';
 import KNN from 'ml-knn';
+import FeedbackForm from './FeedbackForm';
+import { Chart, Scatter } from 'react-chartjs-2';
+import 'chart.js/auto';
+import './App.css';
 
 const Advanced = () => {
     const [data, setData] = useState(null);
@@ -23,43 +27,54 @@ const Advanced = () => {
     const [page, setPage] = useState(1);
     const itemsPerPage = 50; 
     const [labelColumn, setLabelColumn] = useState(null);
+    const chartRef = useRef(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('');
+
 
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file && file.name.endsWith('.csv')) {
-          Papa.parse(file, {
-            complete: (result) => {
-              const rawData = result.data;
-              const cleanedData = preprocessData(rawData);
-      
-              const { featureColumns, labelColumn } = selectColumns(cleanedData);
-              setFeatureColumns(featureColumns);  
-              setLabelColumn(labelColumn); 
-              const validationIssues = validateData(cleanedData, featureColumns, labelColumn);
-      
-              if (validationIssues.length > 0) {
-                console.error("Validation Issues:", validationIssues);
-                alert("Validation Errors:\n" + validationIssues.join("\n"));
-              } else {
-                console.log("Features:", featureColumns);
-                console.log("Label:", labelColumn);
-                console.log("Cleaned and Validated Data:", cleanedData);
-      
-                setData(cleanedData);
-                setDisplayData(cleanedData.slice(0, itemsPerPage)); 
-                createMeanPrediction(cleanedData.slice(0, itemsPerPage)); 
-                createLinearRegression(cleanedData.slice(0, itemsPerPage), featureColumns, labelColumn); 
-                createKNNModel(cleanedData.slice(0, itemsPerPage), featureColumns, labelColumn); 
-                setShowPopup(false); 
-              }
-            },
-            header: true,
-            skipEmptyLines: true,
-          });
+            setIsLoading(true);
+            setLoadingMessage("Loading and processing data...");
+            Papa.parse(file, {
+                complete: (result) => {
+                const rawData = result.data;
+                const cleanedData = preprocessData(rawData);
+        
+                const { featureColumns, labelColumn } = selectColumns(cleanedData);
+                setFeatureColumns(featureColumns);  
+                setLabelColumn(labelColumn); 
+                const validationIssues = validateData(cleanedData, featureColumns, labelColumn);
+        
+                if (validationIssues.length > 0) {
+                    console.error("Validation Issues:", validationIssues);
+                    alert("Validation Errors:\n" + validationIssues.join("\n"));
+                    setIsLoading(false);
+                    setLoadingMessage('');
+                } else {
+                    console.log("Features:", featureColumns);
+                    console.log("Label:", labelColumn);
+                    console.log("Cleaned and Validated Data:", cleanedData);
+                    setData(cleanedData);
+                    setDisplayData(cleanedData.slice(0, itemsPerPage)); 
+                    createMeanPrediction(cleanedData.slice(0, itemsPerPage)); 
+                    createLinearRegression(cleanedData.slice(0, itemsPerPage), featureColumns, labelColumn); 
+                    createKNNModel(cleanedData.slice(0, itemsPerPage), featureColumns, labelColumn); 
+                    setShowPopup(false);
+                    setIsLoading(false);
+                    setLoadingMessage('');
+                }
+                },
+                header: true,
+                skipEmptyLines: true,
+            });
         } else {
-          alert("Please upload a valid CSV file.");
+            alert("Please upload a valid CSV file.");
+            setIsLoading(false);
+            setLoadingMessage('');
         }
-      };
+    };
     
     const loadMoreData = () => {
     const nextPage = page + 1;
@@ -88,25 +103,25 @@ const Advanced = () => {
     }, [displayData, labelColumn]);
 
     const preprocessData = (data) => {
-        if (data && data.length > 0) {
-            const columns = Object.keys(data[0]);
-            columns.forEach((column, index) => {
-                columns[index] = column.trim();
-            });
-        }
-    
-        return data.map(row => {
-            const processedRow = {};
-            Object.keys(row).forEach(key => {
-                let value = row[key];
-                if (typeof value === 'string') {
-                    value = value.replace(/[^0-9.-]+/g, ''); 
-                }
-                processedRow[key] = value === "" || isNaN(value) ? value : parseFloat(value);
-            });
-            return processedRow;
-        });
-    };
+         if (data && data.length > 0) {
+             const columns = Object.keys(data[0]);
+             columns.forEach((column, index) => {
+                 columns[index] = column.trim();
+             });
+         }
+     
+         return data.map(row => {
+             const processedRow = {};
+             Object.keys(row).forEach(key => {
+                 let value = row[key];
+                 if (typeof value === 'string') {
+                     value = value.replace(/[^0-9.-]+/g, ''); 
+                 }
+                 processedRow[key] = value === "" || isNaN(value) ? value : parseFloat(value);
+             });
+             return processedRow;
+         });
+     };
     
     const preprocessDataForKNN = (data) => {
         return data.map(row => {
@@ -155,11 +170,11 @@ const Advanced = () => {
         }
     
         featureColumns.forEach(col => {
-            if (!data.every(row => !isNaN(row[col]))) {issues.push(`Feature column "${col}" contains non-numeric values.`);}});
+            if (!data.every(row => !isNaN(row[col]))) {issues.push(`Feature column "${col}" contains non-numeric values.`);}}); 
     
         if (!data.every(row => !isNaN(row[labelColumn]))) {issues.push(`Label column "${labelColumn}" contains non-numeric values.`); }
     
-        const missingInFeatures = featureColumns.some(col =>data.some(row => row[col] === null || row[col] === ""));
+        const missingInFeatures = featureColumns.some(col =>data.some(row => row[col] === null || row[col] === "")); 
         if (missingInFeatures) {issues.push("Missing values found in feature columns.");}
     
         const missingInLabel = data.some(row => row[labelColumn] === null || row[labelColumn] === "");
@@ -176,7 +191,7 @@ const Advanced = () => {
         const featureColumns = numericColumns.slice(0, -1); 
         const labelColumn = numericColumns.slice(-1)[0]; 
     
-        const validFeatureColumns = featureColumns.filter(col => data.every(row => !isNaN(row[col]) && row[col] !== null && row[col] !== ""));
+        const validFeatureColumns = featureColumns.filter(col => data.every(row => !isNaN(row[col]) && row[col] !== null && row[col] !== "")); 
     
         const isLabelColumnNumeric = data.every(row => !isNaN(row[labelColumn]) && row[labelColumn] !== null && row[labelColumn] !== "");
     
@@ -213,15 +228,12 @@ const Advanced = () => {
             const features = data.map(row => featureColumns.map(col => row[col]));
             const labels = data.map(row => row[labelColumn]);
     
-            
             const knn = new KNN(features, labels, { k: 3 });
             setKnnModel(knn);
     
-            
             const initialFeature = features[0]; 
             const initialPrediction = knn.predict([initialFeature]);
     
-            
             setKnnPrediction(initialPrediction[0]);
     
             const knnAnalysisText = `KNN model created with k=3. The model uses ${featureColumns.length} features to predict the label.`;
@@ -232,9 +244,9 @@ const Advanced = () => {
         } catch (error) {
             console.error("Error creating KNN model:", error);
             setKnnModel(null);
+            setKnnAnalysis(`KNN model not created, error: ${error}`)
         }
     };
-    
 
     const createMeanPrediction = (data) => {
         try {
@@ -260,57 +272,104 @@ const Advanced = () => {
         } catch (error) {
             console.error('Error generating mean-based prediction:', error);
             setMeanPrediction(null);
+            setMeanAnalysis(`Mean-based prediction failed: ${error}`);
         }
     };
 
     const createLinearRegression = (data, featureColumns, labelColumn) => {
-        if (!featureColumns || featureColumns.length === 0 || !labelColumn) {
-            console.error("Invalid feature or label columns for linear regression.");
-            return;
-        }
-    
-        try {
-            const features = data.map(row => featureColumns.map(col => row[col]));
-            const labels = data.map(row => row[labelColumn]);
-    
-            const regression = ss.linearRegression(features.map((f, i) => [...f, labels[i]]));
-            const { m, b } = regression; 
-    
-            const featureValues = features.map(row => row[0]); 
-            const correlation = ss.sampleCorrelation(featureValues, labels); 
-    
-            console.log("Regression Model:", { m, b });
-    
-            setModelPrediction({ m, b });
-    
-            let slopeInterpretation = "";
-            if (Math.abs(m) < 0.01) {
-                slopeInterpretation = "The slope is close to zero, suggesting a weak or no linear relationship between the feature and the label.";
-            } else if (m > 0) {
-                slopeInterpretation = "The slope is positive, indicating a positive correlation between the feature and the label.";
-            } else {
-                slopeInterpretation = "The slope is negative, indicating a negative correlation between the feature and the label.";
-            }
-    
-            let correlationInterpretation = "";
-            if (Math.abs(correlation) < 0.1) {
-                correlationInterpretation = "The correlation between the feature and the label is very weak, supporting a weak linear relationship.";
-            } else if (Math.abs(correlation) < 0.5) {
-                correlationInterpretation = "There is a moderate correlation between the feature and the label.";
-            } else {
-                correlationInterpretation = "The feature and the label have a strong correlation.";
-            }
-    
-            setModelAnalysis(`
-                The regression equation is: y = ${m.toFixed(2)}x + ${b.toFixed(2)}.\n
-                Slope Interpretation: ${slopeInterpretation}.\n
-                Correlation Interpretation: ${correlationInterpretation}.
-            `);
-    
-        } catch (error) {
-            console.error("Error generating linear regression:", error);
-            setModelPrediction(null);
-        }
+         if (!featureColumns || featureColumns.length === 0 || !labelColumn) {
+             console.error("Invalid feature or label columns for linear regression.");
+             return;
+         }
+     
+         try {
+             const features = data.map(row => featureColumns.map(col => row[col]));
+             const labels = data.map(row => row[labelColumn]);
+     
+             const regression = ss.linearRegression(features.map((f, i) => [f[0], labels[i]]));
+             const { m, b } = regression;
+     
+             const featureValues = features.map(row => row[0]);
+             const correlation = ss.sampleCorrelation(featureValues, labels);
+     
+             console.log("Regression Model:", { m, b });
+     
+             setModelPrediction({ m, b });
+     
+             // Slope interpretation
+             let slopeInterpretation = "";
+             if (Math.abs(m) < 0.01) {
+                 slopeInterpretation = "Very weak or no linear relationship between feature and label.";
+             } else if (m > 0) {
+                 slopeInterpretation = "Positive correlation between feature and label.";
+             } else {
+                 slopeInterpretation = "Negative correlation between feature and label.";
+             }
+     
+             // Intercept interpretation
+             let interceptInterpretation = `Intercept (b) is ${b.toFixed(2)}, indicating the label value when feature is 0.`;
+             if (b > 0) {
+                 interceptInterpretation += " This suggests a positive baseline label value.";
+             } else if (b < 0) {
+                 interceptInterpretation += " This suggests a negative baseline label value.";
+             }
+     
+             // Correlation interpretation
+             let correlationInterpretation = "";
+             if (Math.abs(correlation) < 0.1) {
+                 correlationInterpretation = "Very weak correlation, indicating a poor linear relationship.";
+             } else if (Math.abs(correlation) < 0.5) {
+                 correlationInterpretation = "Moderate correlation, suggesting a reasonable linear relationship.";
+             } else {
+                 correlationInterpretation = "Strong correlation, indicating a strong linear relationship.";
+             }
+     
+             // Predicted label for specific feature values
+             const exampleFeatureValue = 10; // Example: Use 10 as a sample input
+             const predictedLabelForExample = (m * exampleFeatureValue + b).toFixed(2);
+             const predictionExampleMessage = `For a feature value of ${exampleFeatureValue}, the predicted label is ${predictedLabelForExample}.`;
+     
+             // Confidence interpretation based on correlation
+             let confidenceInterpretation = "";
+             if (Math.abs(correlation) > 0.7) {
+                 confidenceInterpretation = "High confidence in the model's predictions.";
+             } else if (Math.abs(correlation) > 0.4) {
+                 confidenceInterpretation = "Moderate confidence in the model's predictions.";
+             } else {
+                 confidenceInterpretation = "Low confidence in the model's predictions.";
+             }
+     
+             // Update analysis with structured and concise insights
+             const analysisText = `
+                 <strong>Regression Equation:</strong>  
+                 y = ${m.toFixed(2)}x + ${b.toFixed(2)}
+     
+                 <strong>Slope Interpretation:</strong>  
+                 - ${slopeInterpretation}
+     
+                 <strong>Intercept Interpretation:</strong>  
+                 - ${interceptInterpretation}
+     
+                 <strong>Correlation Interpretation:</strong>  
+                 - ${correlationInterpretation}
+     
+                 <strong>Predicted Label (for feature value = 10):</strong>  
+                 - ${predictionExampleMessage}
+     
+                 <strong>Model Confidence:</strong>  
+                 - ${confidenceInterpretation}
+             `;
+     
+             // Replace newlines with <br /> tags for proper HTML rendering
+             const formattedAnalysis = analysisText.replace(/\n/g, "<br />");
+     
+             setModelAnalysis(formattedAnalysis);
+     
+         } catch (error) {
+             console.error("Error generating linear regression:", error);
+             setModelPrediction(null);
+             setModelAnalysis(`Linear regression failed to create: ${error}`);
+         }
     };
     
     const calculateCorrelation = (meanPrediction, regressionPredictions) => {
@@ -322,7 +381,7 @@ const Advanced = () => {
         const correlation = covariance / (stdDevMeanPrediction * stdDevRegression);
         return correlation;
     };
-    
+
     const renderKNNPrediction = () => {
         if (!knnModel) return null;
     
@@ -357,7 +416,7 @@ const Advanced = () => {
                         onChange={(e) => {
                             const x = parseFloat(e.target.value);
                             const prediction = knnModel.predict([x]);
-                            setKnnPrediction(prediction);
+                            setKnnPrediction(prediction[0]);
                         }}
                     />
                 </div>
@@ -366,64 +425,104 @@ const Advanced = () => {
                         <strong>Prediction:</strong> {knnPrediction}
                     </div>
                 )}
+                {/* Display KNN classification regions */}
+               {featureColumns && featureColumns.length > 1 && (
+                 <div className="knn-classification-regions">
+                   <Scatter
+                      data={{
+                          datasets: [
+                            {
+                                label: 'Data points',
+                                data: displayData.map(row => ({
+                                  x: row[featureColumns[0]],
+                                    y: row[featureColumns[1]],
+                                    label: row[labelColumn]
+                                })),
+                                backgroundColor: displayData.map(row => row[labelColumn] === 0 ? 'red' : 'blue')
+                            }
+                        ]
+                      }}
+                        options={{
+                            scales: {
+                              x: {
+                                  title: {
+                                      display: true,
+                                      text: 'Feature 1' // Replace with the appropriate feature column name
+                                }
+                              },
+                              y: {
+                                  title: {
+                                      display: true,
+                                      text: 'Feature 2' // Replace with the appropriate feature column name
+                                  }
+                              }
+                            },
+                            plugins: {
+                                title: {
+                                  display: true,
+                                 text: 'KNN Classification Regions'
+                               }
+                            }
+                      }}
+                   />
+                 </div>
+               )}
             </div>
         );
     };
-    
 
     const renderCorrelationCard = () => {
-        if (!meanPrediction || !modelPrediction || !knnModel || !featureColumns.length) return null;
-    
-        return (
-            <div className="predictions-card">
-                <h3 className="predictions-header">Correlation and Analysis</h3>
-                <div className="analysis-box">
+         if (!meanPrediction || !modelPrediction || !knnModel || !featureColumns.length) return null;
+     
+         return (
+             <div className="predictions-card">
+                 <h3 className="predictions-header">Model Correlation and Insights</h3>
+                 <div className="analysis-box">
                     <p className="analysis-text">
-                        <strong>Mean-Based Prediction:</strong> 
+                         <strong>Mean-Based Prediction:</strong> 
                         This model calculates the average value of the target variable. It's a simple benchmark that represents the central tendency of the data. 
                         If other models deviate significantly from the mean, it suggests they are capturing patterns beyond a simple average.
-                    </p>
+                     </p>
                     <p className="analysis-text">
-                        <strong>Linear Regression Prediction:</strong> 
-                        The regression model attempts to capture linear relationships between the input features and the target variable. 
-                        A close match between the regression and mean predictions may indicate a weak or non-existent linear trend, while significant differences suggest a strong linear relationship.
+                         <strong>Linear Regression Prediction:</strong> 
+                         The regression model attempts to capture linear relationships between the input features and the target variable. 
+                         A close match between the regression and mean predictions may indicate a weak or non-existent linear trend, while significant differences suggest a strong linear relationship.
+                     </p>
+                     <p className="analysis-text">
+                         <strong>KNN Prediction:</strong> 
+                         The K-Nearest Neighbors (KNN) model bases its predictions on the similarity between data points. This approach is especially useful for capturing non-linear patterns that regression may miss. 
+                         If KNN predictions closely align with the mean or regression, it may indicate that the underlying relationships in the data are either simple or linear.
                     </p>
-                    <p className="analysis-text">
-                        <strong>KNN Prediction:</strong> 
-                        The K-Nearest Neighbors (KNN) model bases its predictions on the similarity between data points. This approach is especially useful for capturing non-linear patterns that regression may miss. 
-                        If KNN predictions closely align with the mean or regression, it may indicate that the underlying relationships in the data are either simple or linear.
-                    </p>
-                    <p className="analysis-text">
-                        <strong>Insights and Correlations:</strong> 
-                        Observing the relationships between predictions can reveal useful information:
-                        <ul>
-                            <li>If all three predictions are similar, the data may lack complex patterns, and simpler models might suffice.</li>
-                            <li>Disparities between regression and KNN predictions might indicate non-linear relationships in the data.</li>
-                            <li>A significant difference between mean-based and other models suggests that the data has predictive patterns beyond randomness or central tendency.</li>
-                        </ul>
-                    </p>
-                </div>
-                <div className="additional-insights">
-                    <p>
-                        <em>
-                            Use these interpretations to understand how your models interact with the data. 
+                     <p className="analysis-text">
+                         <strong>Insights and Correlations:</strong> 
+                         Observing the relationships between predictions can reveal useful information:
+                         <ul>
+                             <li>If all three predictions are similar, the data may lack complex patterns, and simpler models might suffice.</li>
+                             <li>Disparities between regression and KNN predictions might indicate non-linear relationships in the data.</li>
+                             <li>A significant difference between mean-based and other models suggests that the data has predictive patterns beyond randomness or central tendency.</li>
+                         </ul>
+                     </p>
+                 </div>
+                 <div className="additional-insights">
+                     <p>
+                         <em>
+                             Use these interpretations to understand how your models interact with the data. 
                             If you notice discrepancies, consider revisiting feature engineering, model parameters, or even exploring alternative models.
-                        </em>
-                    </p>
-                </div>
-            </div>
-        );
-    };
-    
+                         </em>
+                     </p>
+                 </div>
+             </div>
+         );
+     };
 
     const renderMeanPrediction = () => {
         if (meanPrediction === null) return null;
         return (
             <div className="predictions-card">
                 <h3 className="predictions-header">Mean-Based Prediction Result</h3>
-                <div className="analysis-box">
+                 <div className="analysis-box">
                     <p className="analysis-text">{meanAnalysis}</p>
-                </div>
+                 </div>
                 <div className="prediction-result">
                     <strong>Predicted Value:</strong> {meanPrediction.toFixed(2)}
                 </div>
@@ -440,15 +539,68 @@ const Advanced = () => {
         return (
             <div className="predictions-card">
                 <h3 className="predictions-header">Linear Regression Result</h3>
-                <div className="analysis-box">
-                    <p className="analysis-text">{interpretation}</p>
-                </div>
+                 <div className="analysis-box">
+                   {/* Use dangerouslySetInnerHTML to render the HTML */}
+                    <div className="analysis-text" dangerouslySetInnerHTML={{ __html: interpretation }} />
+                 </div>
                 <div className="prediction-result">
                     <strong>Slope (m):</strong> {m.toFixed(2)}
                 </div>
                 <div className="prediction-result">
                     <strong>Intercept (b):</strong> {b.toFixed(2)}
                 </div>
+    
+                {/* Display scatter plot with regression line */}
+               {featureColumns && featureColumns.length > 0 && (
+                <div className="scatter-plot">
+                    <Scatter
+                        data={{
+                            datasets: [
+                                {
+                                    label: 'Data points',
+                                    data: displayData.map(row => ({
+                                        x: row[featureColumns[0]],
+                                        y: row[labelColumn]
+                                    })),
+                                    backgroundColor: 'blue'
+                                },
+                                {
+                                    label: 'Regression line',
+                                    data: displayData.map(row => ({
+                                        x: row[featureColumns[0]],
+                                        y: modelPrediction.m * row[featureColumns[0]] + modelPrediction.b
+                                    })),
+                                    type: 'line',
+                                    borderColor: 'red',
+                                    fill: false
+                                }
+                            ]
+                        }}
+                        options={{
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Feature' 
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Label'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Linear Regression Chart'
+                                }
+                            }
+                        }}
+                    />
+                 </div>
+               )}
     
                 {/* Instructions for manual prediction */}
                 <div className="manual-prediction-instructions">
@@ -482,6 +634,7 @@ const Advanced = () => {
             </div>
         );
     };
+    
 
     return (
         <div className="advanced-page">
@@ -489,50 +642,53 @@ const Advanced = () => {
                 <Link to="/">
                     <img src={muncher} className="App-logo" alt="logo" />
                 </Link>
-                <h1 
-                    style={{fontSize: 'clamp(0.2rem, 4vw, 3rem)'}}
-                className="page-title">Advanced ML Models</h1>
+                <h1  style={{ fontSize: 'clamp(0.2rem, 4vw, 3rem)' }}>Advanced ML Models</h1>
             </header>
             <div className="import-box">
                 <h2>Import CSV Data Only</h2>
                 <input type="file" accept=".csv" onChange={handleFileUpload} className="file-input" />
+                 {isLoading && <p>{loadingMessage}</p>}
             </div>
             {data && (
                 <>
                     <button className="btn" onClick={() => setShowPopup(true)}>Review Uploaded CSV - Cleaned & Tuned</button>
-                    
                     {showPopup && (
-                    <div className="popup">
-                        <div className="popup-content">
-                        <button className="close-btn" onClick={() => setShowPopup(false)}>X</button>
-                        <h2>Uploaded CSV Data</h2>
-                        <table className="data-table">
-                            <thead>
-                            <tr>
-                                {Object.keys(data[0]).map((key, index) => (
-                                <th key={index}>{key}</th>
-                                ))}
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {data.map((row, index) => (
-                                <tr key={index}>
-                                {Object.values(row).map((value, cellIndex) => (
-                                    <td key={cellIndex}>{value}</td>
-                                ))}
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                        <div className="popup">
+                            <div className="popup-content">
+                                <button className="close-btn" onClick={() => setShowPopup(false)}>X</button>
+                                <h2>Uploaded CSV Data</h2>
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            {Object.keys(data[0]).map((key, index) => (
+                                                <th key={index}>{key}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.map((row, index) => (
+                                            <tr key={index}>
+                                                {Object.values(row).map((value, cellIndex) => (
+                                                    <td key={cellIndex}>{value}</td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
                     )}
                 </>
-        )}
+            )}
             {renderMeanPrediction()}
             {renderLinearRegressionCard()}
             {renderKNNPrediction()}
             {renderCorrelationCard()}
+            <div>
+                <footer className='footer'>
+                    <FeedbackForm />
+                </footer>
+            </div>
         </div>
     );
 };

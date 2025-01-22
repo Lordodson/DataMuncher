@@ -3,6 +3,7 @@ import muncher from './muncher.jpeg';
 import { Link } from 'react-router-dom';
 import styles from './EducationalResource.css';
 import TableOfContents from './TableOfContents';
+import FeedbackForm from './FeedbackForm';
 
 const EducationalResource = () => {
   return (
@@ -31,6 +32,9 @@ const EducationalResource = () => {
           {/* Add more sections here */}
         </div>
       </div>
+        <footer className='footer'>
+          <FeedbackForm />
+        </footer>
     </div>
   );
 };

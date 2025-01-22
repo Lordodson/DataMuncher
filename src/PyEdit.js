@@ -4,6 +4,7 @@ import muncher from './muncher.jpeg';
 import { Link } from 'react-router-dom';
 import './PyEdit.css';  
 import { Chart } from 'chart.js';  
+import FeedbackForm from './FeedbackForm';
 
 const PyEdit = () => {
   const [code, setCode] = useState('');  
@@ -105,6 +106,9 @@ const PyEdit = () => {
           </div>
         </div>
       </div>
+        <footer className='footer'>
+          <FeedbackForm />
+        </footer>
     </div>
   );
 };

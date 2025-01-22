@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Link, useLocation } from "react-router-dom";
 import Home from "./Home";
 import SignUp from "./signUp";
@@ -7,9 +7,10 @@ import About from "./about";
 import Advanced from "./Advanced";
 import PyEdit from "./PyEdit";
 import EducationalResource from "./EducationResource";
+import FeedbackForm from "./FeedbackForm"; // Import FeedbackForm
 import './App.css';
 
-function Navbar() {
+function Navbar({ theme, toggleTheme }) {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -18,7 +19,9 @@ function Navbar() {
 
   if (shouldHideNavbar) return null;
 
-  const handleLinkClick = () => {setIsMenuOpen(false);} // Close the menu when a link is clicked};
+  const handleLinkClick = () => {
+    setIsMenuOpen(false); // Close the menu when a link is clicked
+  };
 
   return (
     <nav className="navbar">
@@ -32,9 +35,6 @@ function Navbar() {
         <li className="navbar-item">
           <Link to="/" className="navbar-link" onClick={handleLinkClick}>Home</Link>
         </li>
-        {/* <li className="navbar-item">
-          <Link to="/signup" className="navbar-link" onClick={handleLinkClick}>Sign Up</Link>
-        </li> */}
         <li className="navbar-item">
           <Link to="/about" className="navbar-link" onClick={handleLinkClick}>About</Link>
         </li>
@@ -50,16 +50,40 @@ function Navbar() {
         <li className="navbar-item">
           <Link to="/EducationalResource" className="navbar-link" onClick={handleLinkClick}>Educational Resource</Link>
         </li>
+        {/* <li className="navbar-item theme-toggle-item">
+          <button className="theme-toggle-button" onClick={toggleTheme}>
+            Switch to {theme === 'light' ? 'dark' : 'light'} mode
+          </button>
+        </li> */}
       </ul>
     </nav>
   );
 }
 
 export default function App() {
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (systemPrefersDark) {
+      setTheme('dark');
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    console.log(`Theme set to: ${theme}`); // Debugging log
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+    console.log(`Theme toggled to: ${theme === 'light' ? 'dark' : 'light'}`); // Debugging log
+  };
+
   return (
     <Router>
-      <Navbar />
-      <div className="main-content">
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
+      <div className={`main-content app ${theme}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<SignUp />} />
@@ -68,6 +92,7 @@ export default function App() {
           <Route path="/Advanced" element={<Advanced />} />
           <Route path="/PyEdit" element={<PyEdit />} />
           <Route path="/EducationalResource" element={<EducationalResource />} />
+          <Route path="/feedback" element={<FeedbackForm theme={theme} />} /> {/* Pass theme prop */}
         </Routes>
       </div>
     </Router>
