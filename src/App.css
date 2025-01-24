@@ -7,7 +7,7 @@
   width: auto;
   height: clamp(13vh,10vw,18vh);
   pointer-events: none;
-  position: absolute; 
+  position: absolute;
   top: 10px;
   left: 10px;
 }
@@ -42,7 +42,7 @@
   align-items: right;
   flex-direction: column;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  border-radius: 5px; /* Rounded corners */
+  border-radius: 5px;
 }
 
 .import-box h2 {
@@ -284,30 +284,30 @@ p {
   padding: 20px;
   display: flex;
   align-items: center;
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .summary-content {
-  flex: 1; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .summary-content h3, .summary-content p {
   margin: 0;
   font-size: 1.2rem;
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chart-container {
   position: relative;
-  max-height: 1000px; 
+  max-height: 1000px;
   width: 100%;
   margin-bottom: 20px;
-  padding: 100px; 
+  padding: 100px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -339,7 +339,7 @@ p {
   color: white;
   font-size: 24px;
   cursor: pointer;
-  display: none; 
+  display: none;
 }
 
 .navbar-list {
@@ -368,12 +368,12 @@ p {
 
 @media (max-width: 1000px) {
   .menu-toggle {
-    display: block; 
+    display: block;
   }
 
   .navbar-list {
-    display: none; 
-    flex-direction: column; 
+    display: none;
+    flex-direction: column;
     background-color: #333;
     position: absolute;
     top: 60px;
@@ -382,7 +382,7 @@ p {
   }
 
   .navbar-list.open {
-    display: flex; 
+    display: flex;
   }
 }
 
@@ -425,6 +425,20 @@ p {
 .analysis-text {
   font-size: 1em;
   color: #555;
+}
+
+.analysis-text strong {
+  font-weight: bold;
+}
+
+.analysis-text ul {
+  list-style-type: disc;
+  margin-left: 20px;
+}
+
+.additional-insights {
+  margin-top: 15px;
+  font-style: italic;
 }
 
 .prediction-result {
@@ -579,35 +593,39 @@ p {
 }
 
 .status-message-container {
-  margin: 25px 0; 
-  border: 2px solid #ddd; 
-  border-radius: 5px; 
-  width: 400px;
-  display: inline-block;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
- }
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.status-message-header {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
 
 .status-message {
-  font-size: 0.9rem; 
-  font-weight: normal; 
-  color: #555; 
+  padding: 5px 10px;
   margin-bottom: 5px;
+  border-radius: 3px;
 }
 
 .toggle-options-container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: fit-content; 
+  width: fit-content;
   padding: 20px;
-  border: 1px solid #ddd; 
-  background-color: #f9f9f9; 
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 .toggle-option {
-  display: flex; 
-  align-items: center; 
+  display: flex;
+  align-items: center;
   margin-bottom: 5px;
 }
 
@@ -616,12 +634,15 @@ p {
 }
 
 .import-controls {
-  display: flex;
-  align-items: flex-start; 
-  margin-bottom: 20px;
-  width: 100%; 
-  margin-top: 20px; 
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    width: 100%;
+    margin-top: 20px;
+    justify-content: space-between; /* Added to space out items */
 }
+
+
 
 .refresh-button {
   background-color: transparent;
@@ -632,10 +653,22 @@ p {
   margin-top: 10px;
   margin-left: auto;
   font-size: 16px;
-  transition: transform 0.3s ease, scale 0.2s ease; 
+  transition: transform 0.3s ease, scale 0.2s ease;
 }
 
 .refresh-button:hover {
 background-color: #f0f0f0;
 transform: scale(1.2);
 }
+
+.label-column-selector {
+  margin-bottom: 10px;
+}
+
+.outlier-threshold-control {
+  margin-bottom: 10px;
+}
+
+
+
+

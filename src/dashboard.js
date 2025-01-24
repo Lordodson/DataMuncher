@@ -54,15 +54,15 @@ const Dashboard = () => {
         if (file && file.name.endsWith('.csv')) {
             Papa.parse(file, {
                 complete: (result) => {
-                     const parsedData = result.data;
-                     console.log("Parsed data:", parsedData); 
-                     setData(parsedData);
-                     setDisplayData(parsedData.slice(0, itemsPerPage));
-                     setFileUploaded(true);
-                     setDuplicateRemovalComplete(false);
-                     setMissingValueHandlingComplete(false);
-                     setNumericColumnIdentificationComplete(false);
-                     setExtractionOfNumericDataComplete(false);
+                    const parsedData = result.data;
+                    console.log("Parsed data:", parsedData); 
+                    setData(parsedData);
+                    setDisplayData(parsedData.slice(0, itemsPerPage));
+                    setFileUploaded(true);
+                    setDuplicateRemovalComplete(false);
+                    setMissingValueHandlingComplete(false);
+                    setNumericColumnIdentificationComplete(false);
+                    setExtractionOfNumericDataComplete(false);
                     setGraphErrorMessage("");
                     setSummaryErrorMessage("");
                 },
@@ -76,25 +76,25 @@ const Dashboard = () => {
 
      const handleRefresh = () => {
         setIsSpinning(true) 
-       if (fileInputRef.current && fileInputRef.current.files.length > 0) {
+        if (fileInputRef.current && fileInputRef.current.files.length > 0) {
             const file = fileInputRef.current.files[0];
             if(file && file.name.endsWith('.csv')) {
                 Papa.parse(file, {
                 complete: (result) => {
-                     const parsedData = result.data;
-                     console.log("Parsed data:", parsedData); 
-                     setData(parsedData);
-                     setDisplayData(parsedData.slice(0, itemsPerPage));
-                     setFileUploaded(true);
-                     setDuplicateRemovalComplete(false);
-                     setMissingValueHandlingComplete(false);
-                     setNumericColumnIdentificationComplete(false);
-                     setExtractionOfNumericDataComplete(false);
+                    const parsedData = result.data;
+                    console.log("Parsed data:", parsedData); 
+                    setData(parsedData);
+                    setDisplayData(parsedData.slice(0, itemsPerPage));
+                    setFileUploaded(true);
+                    setDuplicateRemovalComplete(false);
+                    setMissingValueHandlingComplete(false);
+                    setNumericColumnIdentificationComplete(false);
+                    setExtractionOfNumericDataComplete(false);
                     setGraphErrorMessage("");
                     setSummaryErrorMessage("");
-                   generateSummary(parsedData)
+                    generateSummary(parsedData)
                     generateGraphs(parsedData)
-                     setTimeout(() => setIsSpinning(false), 300);
+                    setTimeout(() => setIsSpinning(false), 300);
                 },
                 header: true,
                 skipEmptyLines: true,
@@ -134,7 +134,7 @@ const Dashboard = () => {
         if (data.length === 0) return;
         let uniqueData = data;
         if(removeDuplicates) {
-           uniqueData = _.uniqWith(data, _.isEqual);
+            uniqueData = _.uniqWith(data, _.isEqual);
             console.log("Duplicates removed");
           console.log("Setting duplicateRemovalComplete to true");
           setDuplicateRemovalComplete(true);
@@ -156,7 +156,7 @@ const Dashboard = () => {
             console.log("Setting missingValueHandlingComplete to true");
             setMissingValueHandlingComplete(true);
         } else {
-           setMissingValueHandlingComplete(false);
+            setMissingValueHandlingComplete(false);
         }
 
 
@@ -167,7 +167,7 @@ const Dashboard = () => {
         let numericColumns = [];
 
         if(identifyNumericColumns){
-             const columns = Object.keys(standardizedData[0]);
+            const columns = Object.keys(standardizedData[0]);
             numericColumns = columns.filter(column => {
                 return standardizedData.every(row => {
                     const value = row[column];
@@ -179,7 +179,7 @@ const Dashboard = () => {
             setNumericColumnIdentificationComplete(true);
 
         } else{
-          setNumericColumnIdentificationComplete(false);
+            setNumericColumnIdentificationComplete(false);
         }
 
 
@@ -187,26 +187,26 @@ const Dashboard = () => {
         let allNumericData = [];
 
          if(extractNumericData){
-             standardizedData.forEach(row => {
-                 numericColumns.forEach(column => {
-                     const value = row[column];
-                     allNumericData.push(Number(value));
-                 });
-             });
-             console.log("All numeric data:", allNumericData);
-             console.log("Setting extractionOfNumericDataComplete to true"); 
-             setExtractionOfNumericDataComplete(true);
-         } else {
-             setExtractionOfNumericDataComplete(false);
-         }
+              standardizedData.forEach(row => {
+                  numericColumns.forEach(column => {
+                      const value = row[column];
+                      allNumericData.push(Number(value));
+                  });
+              });
+              console.log("All numeric data:", allNumericData);
+              console.log("Setting extractionOfNumericDataComplete to true"); 
+              setExtractionOfNumericDataComplete(true);
+          } else {
+              setExtractionOfNumericDataComplete(false);
+          }
 
-         if(!extractNumericData || !identifyNumericColumns){
+          if(!extractNumericData || !identifyNumericColumns){
               setSummaryErrorMessage("Data summary generation is not possible without the 'Identify Numeric Columns' and 'Extract Numeric Data' options turned on");
-             setSummary(null);
-              return;
-         } else {
-             setSummaryErrorMessage("");
-         }
+              setSummary(null);
+                return;
+          } else {
+              setSummaryErrorMessage("");
+          }
 
 
         const calculateMedian = (arr) => {
@@ -298,11 +298,11 @@ const Dashboard = () => {
         let selectedColumnY = null;
 
         if(!extractNumericData || !identifyNumericColumns){
-           setGraphErrorMessage("Graph generation is not possible without the 'Identify Numeric Columns' and 'Extract Numeric Data' options turned on");
-              setGraphData({});
-              return;
+            setGraphErrorMessage("Graph generation is not possible without the 'Identify Numeric Columns' and 'Extract Numeric Data' options turned on");
+            setGraphData({});
+            return;
         } else{
-             setGraphErrorMessage("");
+            setGraphErrorMessage("");
         }
 
         for (const column of columns) {
@@ -420,51 +420,47 @@ const Dashboard = () => {
             <div className="App-content">
                 <p>Welcome to your dashboard!</p>
                   <div className="import-controls">
+                    
                     <div className="import-box">
                       <h2 className="import-header">Import CSV Data Only</h2>
                       <input type="file" accept=".csv" onChange={handleFileUpload} ref={fileInputRef}/>
-                     </div>
+                    </div>
+
                     <div className="toggle-options-container">
-                       <div className="toggle-option">
+                        <div className="toggle-option">
                             <input type="checkbox" id="removeDuplicates" checked={removeDuplicates} onChange={(e) => setRemoveDuplicates(e.target.checked)} />
                             <label htmlFor="removeDuplicates">Remove Duplicates</label>
                         </div>
-                       <div className="toggle-option">
+                        <div className="toggle-option">
                             <input type="checkbox"  id="handleMissingValues" checked={handleMissingValues} onChange={(e) => setHandleMissingValues(e.target.checked)} />
                             <label htmlFor="handleMissingValues">Handle Missing Values</label>
                         </div>
                         <div className="toggle-option">
-                             <input type="checkbox" id="identifyNumericColumns" checked={identifyNumericColumns} onChange={(e) => setIdentifyNumericColumns(e.target.checked)} />
+                            <input type="checkbox" id="identifyNumericColumns" checked={identifyNumericColumns} onChange={(e) => setIdentifyNumericColumns(e.target.checked)} />
                             <label htmlFor="identifyNumericColumns">Identify Numeric Columns</label>
-                       </div>
+                        </div>
                         <div className="toggle-option">
-                           <input type="checkbox" id="extractNumericData" checked={extractNumericData} onChange={(e) => setExtractNumericData(e.target.checked)} />
-                           <label htmlFor="extractNumericData">Extract Numeric Data</label>
-                         </div>
-                         <button onClick={handleRefresh} className="refresh-button" style={isSpinning ? {transform: 'rotate(360deg)'} : {}}>
-                             <FaSyncAlt color="#007bff" size="1em"/>
-                         </button>
+                            <input type="checkbox" id="extractNumericData" checked={extractNumericData} onChange={(e) => setExtractNumericData(e.target.checked)} />
+                            <label htmlFor="extractNumericData">Extract Numeric Data</label>
+                        </div>
+                        <button onClick={handleRefresh} className="refresh-button" style={isSpinning ? {transform: 'rotate(360deg)'} : {}}>
+                          <FaSyncAlt color="#007bff" size="1em"/>
+                        </button>
                     </div>
                   </div>
 
                 <div className="status-message-container">
-                     <ul style={{listStyleType: "none", padding: "0px"}}>
-                          <h2 className="status-message-header">Data Status</h2>
-                         <li className="status-message" style={{ display: fileUploaded ? 'block' : 'none' }}>✅ .csv uploaded!</li>
-                          {removeDuplicates && (
-                           <li className="status-message" style={{ display: duplicateRemovalComplete ? 'block' : 'none' }}>✅ Duplicate Removal Cleaning Complete!</li>
-                           )}
-                           {handleMissingValues && (
-                           <li className="status-message" style={{ display: missingValueHandlingComplete ? 'block' : 'none' }}>✅ Missing Value Handling Cleaning Complete!</li>
-                          )}
-                           {identifyNumericColumns && (
-                             <li className="status-message" style={{ display: numericColumnIdentificationComplete ? 'block' : 'none' }}>✅ Numeric Column identification Cleaning Complete!</li>
-                           )}
-                           {extractNumericData && (
-                            <li className="status-message" style={{ display: extractionOfNumericDataComplete ? 'block' : 'none' }}>✅ Extraction of Numeric Data Complete!</li>
-                          )}
-                       </ul>
-                 </div>
+                  <ul style={{listStyleType: "none", padding: "0px"}}>
+                    <h2 className="status-message-header">Data Status</h2>
+
+                    <li className="status-message" style={{ display: fileUploaded ? 'block' : 'none' }}>✅ .csv uploaded!</li>
+                      {removeDuplicates && (<li className="status-message" style={{ display: duplicateRemovalComplete ? 'block' : 'none' }}>✅ Duplicate Removal Cleaning Complete!</li>)}
+                      {handleMissingValues && (<li className="status-message" style={{ display: missingValueHandlingComplete ? 'block' : 'none' }}>✅ Missing Value Handling Cleaning Complete!</li>)}
+                      {identifyNumericColumns && (<li className="status-message" style={{ display: numericColumnIdentificationComplete ? 'block' : 'none' }}>✅ Numeric Column identification Cleaning Complete!</li>)}
+                      {extractNumericData && (<li className="status-message" style={{ display: extractionOfNumericDataComplete ? 'block' : 'none' }}>✅ Extraction of Numeric Data Complete!</li>)}
+                  
+                  </ul>
+                </div>
 
                 {data && (
                     <>
@@ -497,9 +493,9 @@ const Dashboard = () => {
                         )}
                     </>
                 )}
-                 {summaryErrorMessage && (
-                  <h2 className="error-message">{summaryErrorMessage}</h2>
-                 )}
+                {summaryErrorMessage && (
+                <h2 className="error-message">{summaryErrorMessage}</h2>
+                )}
                 {summary && (
                     <>
                         <h2>Data Overview</h2>
@@ -528,48 +524,48 @@ const Dashboard = () => {
                     </>
                 )}
 
-                 {graphErrorMessage && (
+                {graphErrorMessage && (
                   <h2 className="error-message">{graphErrorMessage}</h2>
                   )}
                     {/* Bar Graph */}
-                 {graphData.bar && (
-                     <div className="chart-container">
-                         <h2>Bar Graph</h2>
-                         <Bar data={graphData.bar} options={{ responsive: true, maintainAspectRatio: false }} />
-                     </div>
-                 )}
+                  {graphData.bar && (
+                      <div className="chart-container">
+                          <h2>Bar Graph</h2>
+                          <Bar data={graphData.bar} options={{ responsive: true, maintainAspectRatio: false }} />
+                      </div>
+                  )}
 
-                 {/* Line Graph */}
-                 {graphData.line && (
-                     <div className="chart-container">
-                         <h2>Line Graph</h2>
-                         <Line data={graphData.line} options={{ responsive: true, maintainAspectRatio: false }} />
-                     </div>
-                 )}
+                  {/* Line Graph */}
+                  {graphData.line && (
+                      <div className="chart-container">
+                          <h2>Line Graph</h2>
+                          <Line data={graphData.line} options={{ responsive: true, maintainAspectRatio: false }} />
+                      </div>
+                  )}
 
-                 {/* Pie Chart */}
-                 {graphData.pie && (
-                     <div className="chart-container">
-                         <h2>Pie Chart</h2>
-                         <Pie data={graphData.pie} options={{ responsive: true, maintainAspectRatio: false }} />
-                     </div>
-                 )}
+                  {/* Pie Chart */}
+                  {graphData.pie && (
+                      <div className="chart-container">
+                          <h2>Pie Chart</h2>
+                          <Pie data={graphData.pie} options={{ responsive: true, maintainAspectRatio: false }} />
+                      </div>
+                  )}
 
-                 {/* Scatter Plot */}
-                 {graphData.scatter && (
-                     <div className="chart-container">
-                         <h2>Scatter Plot</h2>
-                         <Scatter data={graphData.scatter} options={{ responsive: true, maintainAspectRatio: false }} />
-                     </div>
-                 )}
+                  {/* Scatter Plot */}
+                  {graphData.scatter && (
+                      <div className="chart-container">
+                          <h2>Scatter Plot</h2>
+                          <Scatter data={graphData.scatter} options={{ responsive: true, maintainAspectRatio: false }} />
+                      </div>
+                  )}
 
-                 {/* Radar Chart */}
-                 {graphData.radar && (
-                     <div className="chart-container">
-                         <h2>Radar Chart</h2>
-                         <Radar data={graphData.radar} options={{ responsive: true, maintainAspectRatio: false }} />
-                     </div>
-                 )}
+                  {/* Radar Chart */}
+                  {graphData.radar && (
+                      <div className="chart-container">
+                          <h2>Radar Chart</h2>
+                          <Radar data={graphData.radar} options={{ responsive: true, maintainAspectRatio: false }} />
+                      </div>
+                  )}
 
             </div>
             <div>

@@ -29,6 +29,7 @@
     "lodash": "^4.17.21",
     "matplotlib": "^1.0.0",
     "ml-cart": "^2.1.1",
+    "ml-isolation-forest": "^0.1.0",
     "ml-knn": "^3.0.0",
     "ml-random-forest": "^2.1.0",
     "ml-regression": "^6.2.0",
