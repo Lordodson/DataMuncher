@@ -9,7 +9,7 @@ import { Bar, Line, Pie, Scatter, Radar } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { BoxPlotController, BoxAndWiskers } from '@sgratzl/chartjs-chart-boxplot';
-import { FaChartBar, FaChartLine, FaChartPie, FaChartArea, FaSyncAlt } from 'react-icons/fa';
+import { FaChartBar, FaChartLine, FaChartPie, FaChartArea, FaSyncAlt, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import FeedbackForm from './FeedbackForm';
 
@@ -48,21 +48,49 @@ const Dashboard = () => {
     const [summaryErrorMessage, setSummaryErrorMessage] = useState("");
     const fileInputRef = useRef(null);
     const [isSpinning, setIsSpinning] = useState(false)
+    
+    const [csvUploadTime, setCsvUploadTime] = useState(null);
+    const [processingTimes, setProcessingTimes] = useState({
+        duplicateRemoval: null,
+        missingValueHandling: null,
+        numericColumnIdentification: null,
+        extractionOfNumericData: null,
+    });
+    const [summaryGenerationTime, setSummaryGenerationTime] = useState(null);
+    const [graphGenerationTime, setGraphGenerationTime] = useState(null);
+    const [duplicateCount, setDuplicateCount] = useState(0);
+    const [missingValueCount, setMissingValueCount] = useState(0);
+    const [numericColumnCount, setNumericColumnCount] = useState(0);
+    const [extractedValueCount, setExtractedValueCount] = useState(0);
+    const [optionsOpen, setOptionsOpen] = useState(true);
+    const toggleOptions = () => setOptionsOpen(!optionsOpen);
+
 
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file && file.name.endsWith('.csv')) {
+              const startTime = performance.now();
             Papa.parse(file, {
                 complete: (result) => {
+                    const endTime = performance.now();
+                     // Use Math.max to ensure time is not 0
+                    setCsvUploadTime(Math.max((endTime - startTime) / 1000, Number.EPSILON))
                     const parsedData = result.data;
                     console.log("Parsed data:", parsedData); 
                     setData(parsedData);
-                    setDisplayData(parsedData.slice(0, itemsPerPage));
+                     //Initial display data with first page
+                     const initialDisplayData = parsedData.slice(0, itemsPerPage);
+                     setDisplayData(initialDisplayData);
                     setFileUploaded(true);
                     setDuplicateRemovalComplete(false);
                     setMissingValueHandlingComplete(false);
                     setNumericColumnIdentificationComplete(false);
                     setExtractionOfNumericDataComplete(false);
+                     // Reset the cleaning counts
+                    setDuplicateCount(0);
+                    setMissingValueCount(0);
+                    setNumericColumnCount(0);
+                    setExtractedValueCount(0);
                     setGraphErrorMessage("");
                     setSummaryErrorMessage("");
                 },
@@ -79,17 +107,25 @@ const Dashboard = () => {
         if (fileInputRef.current && fileInputRef.current.files.length > 0) {
             const file = fileInputRef.current.files[0];
             if(file && file.name.endsWith('.csv')) {
+                const startTime = performance.now();
                 Papa.parse(file, {
                 complete: (result) => {
+                    const endTime = performance.now();
+                     setCsvUploadTime(Math.max((endTime - startTime) / 1000, Number.EPSILON))
                     const parsedData = result.data;
                     console.log("Parsed data:", parsedData); 
                     setData(parsedData);
-                    setDisplayData(parsedData.slice(0, itemsPerPage));
+                      const initialDisplayData = parsedData.slice(0, itemsPerPage);
+                      setDisplayData(initialDisplayData);
                     setFileUploaded(true);
                     setDuplicateRemovalComplete(false);
                     setMissingValueHandlingComplete(false);
                     setNumericColumnIdentificationComplete(false);
                     setExtractionOfNumericDataComplete(false);
+                    setDuplicateCount(0);
+                    setMissingValueCount(0);
+                    setNumericColumnCount(0);
+                    setExtractedValueCount(0);
                     setGraphErrorMessage("");
                     setSummaryErrorMessage("");
                     generateSummary(parsedData)
@@ -105,109 +141,130 @@ const Dashboard = () => {
        }
     };
 
-    useEffect(() => {
-        const handleScroll = () => {
-            if (window.innerHeight + document.documentElement.scrollTop === document.documentElement.offsetHeight) {
-                loadMoreData();
-            }
-        };
-
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [page, data]);
-
-    const loadMoreData = () => {
-        const nextPage = page + 1;
-        const newData = data.slice(0, nextPage * itemsPerPage);
-        setDisplayData(newData);
-        setPage(nextPage);
-    };
-
+  useEffect(() => {
+    if (data) {
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = page * itemsPerPage;
+        setDisplayData(data.slice(startIndex, endIndex));
+    }
+}, [page, data, itemsPerPage]);
     useEffect(() => {
         if (displayData.length > 0) {
             generateSummary(displayData);
             generateGraphs(displayData);
         }
-    }, [displayData, data]);
+    }, [displayData]);
 
     const generateSummary = (data) => {
         if (data.length === 0) return;
+        
+        let startTime;
+        let endTime;
+        let numDuplicatesRemoved = 0;
+        let numMissingValuesHandled = 0;
+        let numNumericColumns = 0;
+        let numExtractedValues = 0;
+
         let uniqueData = data;
+         startTime = performance.now();
         if(removeDuplicates) {
+            const originalLength = uniqueData.length;
             uniqueData = _.uniqWith(data, _.isEqual);
+            numDuplicatesRemoved = originalLength - uniqueData.length
             console.log("Duplicates removed");
-          console.log("Setting duplicateRemovalComplete to true");
-          setDuplicateRemovalComplete(true);
+            console.log("Setting duplicateRemovalComplete to true");
+            setDuplicateRemovalComplete(true);
         } else {
             setDuplicateRemovalComplete(false);
         }
-
+        endTime = performance.now();
+        setProcessingTimes(prev => ({ ...prev, duplicateRemoval: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
+        setDuplicateCount(numDuplicatesRemoved);
 
         let cleanedData = uniqueData;
+        startTime = performance.now();
         if(handleMissingValues) {
           cleanedData = uniqueData.map(row => {
-              const cleanedRow = {};
-              for (const key in row) {
-                  cleanedRow[key] = row[key] || 'N/A';
-              }
-              return cleanedRow;
-          });
+            const cleanedRow = {};
+            for (const key in row) {
+                if (row[key] == null || row[key] === '')
+                {
+                    numMissingValuesHandled++;
+                    cleanedRow[key] = 'N/A';
+                }
+                else
+                {
+                    cleanedRow[key] = row[key];
+                }
+
+            }
+            return cleanedRow;
+        });
             console.log("Missing values handled");
             console.log("Setting missingValueHandlingComplete to true");
             setMissingValueHandlingComplete(true);
         } else {
-            setMissingValueHandlingComplete(false);
+             setMissingValueHandlingComplete(false);
         }
+        endTime = performance.now();
+        setProcessingTimes(prev => ({ ...prev, missingValueHandling: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
+        setMissingValueCount(numMissingValuesHandled);
 
-
-          const standardizedData = cleanedData; 
-
+        const standardizedData = cleanedData; 
         console.log("Data formats standardized");
-
         let numericColumns = [];
-
+        
+        startTime = performance.now();
         if(identifyNumericColumns){
             const columns = Object.keys(standardizedData[0]);
-            numericColumns = columns.filter(column => {
+             numericColumns = columns.filter(column => {
                 return standardizedData.every(row => {
                     const value = row[column];
                     return !isNaN(parseFloat(value)) && isFinite(value)
                 });
             });
+            numNumericColumns = numericColumns.length;
             console.log("Numeric columns identified:", numericColumns);
-            console.log("Setting numericColumnIdentificationComplete to true"); 
+            console.log("Setting numericColumnIdentificationComplete to true");
             setNumericColumnIdentificationComplete(true);
 
         } else{
             setNumericColumnIdentificationComplete(false);
         }
-
-
+        endTime = performance.now();
+        setProcessingTimes(prev => ({ ...prev, numericColumnIdentification: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
+        setNumericColumnCount(numNumericColumns);
 
         let allNumericData = [];
 
+        startTime = performance.now();
          if(extractNumericData){
-              standardizedData.forEach(row => {
-                  numericColumns.forEach(column => {
-                      const value = row[column];
-                      allNumericData.push(Number(value));
-                  });
-              });
-              console.log("All numeric data:", allNumericData);
-              console.log("Setting extractionOfNumericDataComplete to true"); 
-              setExtractionOfNumericDataComplete(true);
-          } else {
-              setExtractionOfNumericDataComplete(false);
-          }
+            standardizedData.forEach(row => {
+                numericColumns.forEach(column => {
+                    const value = row[column];
+                    allNumericData.push(Number(value));
+                    numExtractedValues++
+                });
+            });
+            console.log("All numeric data:", allNumericData);
+            console.log("Setting extractionOfNumericDataComplete to true"); 
+            setExtractionOfNumericDataComplete(true);
+        } else {
+            setExtractionOfNumericDataComplete(false);
+        }
+        endTime = performance.now();
+        setProcessingTimes(prev => ({ ...prev, extractionOfNumericData: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
+        setExtractedValueCount(numExtractedValues);
 
-          if(!extractNumericData || !identifyNumericColumns){
-              setSummaryErrorMessage("Data summary generation is not possible without the 'Identify Numeric Columns' and 'Extract Numeric Data' options turned on");
-              setSummary(null);
-                return;
-          } else {
-              setSummaryErrorMessage("");
-          }
+        if(!extractNumericData || !identifyNumericColumns){
+            setSummaryErrorMessage("Data summary generation is not possible without the 'Identify Numeric Columns' and 'Extract Numeric Data' options turned on");
+            setSummary(null);
+            return;
+        } else {
+            setSummaryErrorMessage("");
+        }
 
+        startTime = performance.now();
 
         const calculateMedian = (arr) => {
             const sortedArr = arr.slice().sort((a, b) => a - b);
@@ -262,7 +319,6 @@ const Dashboard = () => {
             return (n * (n + 1) * m4) / ((n - 1) * (n - 2) * (n - 3) * m2) - (3 * Math.pow(n - 1, 2)) / ((n - 2) * (n - 3));
         };
 
-
         const summary = {
             mean: allNumericData.length ? _.mean(allNumericData) : 'N/A',
             median: allNumericData.length ? calculateMedian(allNumericData) : 'N/A',
@@ -286,11 +342,15 @@ const Dashboard = () => {
             summary,
         };
 
+        endTime = performance.now();
+        setSummaryGenerationTime(Math.max((endTime - startTime) / 1000, Number.EPSILON));
+
         setSummary(overview);
         console.log("Summary generated:", overview);
     };
 
     const generateGraphs = (data) => {
+        let startTime = performance.now();
         if (data.length === 0) return;
 
         const columns = Object.keys(data[0]);
@@ -322,6 +382,9 @@ const Dashboard = () => {
         const labels = data.map((row, index) => `Row ${index + 1}`);
         const valuesX = data.map(row => Number(row[selectedColumnX]));
         const valuesY = data.map(row => Number(row[selectedColumnY]));
+
+        let endTime = performance.now();
+        setGraphGenerationTime(Math.max((endTime - startTime) / 1000, Number.EPSILON));
 
         setGraphData({
             bar: {
@@ -422,11 +485,16 @@ const Dashboard = () => {
                   <div className="import-controls">
                     
                     <div className="import-box">
-                      <h2 className="import-header">Import CSV Data Only</h2>
-                      <input type="file" accept=".csv" onChange={handleFileUpload} ref={fileInputRef}/>
+                        <h2 className="import-header">Import CSV Data Only</h2>
+                        <p style={{fontSize: '0.8em'}}>Important Note: Some datasets may not return a summary or graphs.</p>
+                        <input type="file" accept=".csv" onChange={handleFileUpload} ref={fileInputRef}/>
                     </div>
 
-                    <div className="toggle-options-container">
+                    <div className={`toggle-options-container-dash ${optionsOpen ? '' : 'collapsed'}`}>
+                        <div className="toggle-button" onClick={toggleOptions}>
+                            {optionsOpen ? <FaArrowRight /> : <FaArrowLeft />}
+                        </div>
+                        <p style={{fontSize: '1em'}}>Cleaning Options</p>
                         <div className="toggle-option">
                             <input type="checkbox" id="removeDuplicates" checked={removeDuplicates} onChange={(e) => setRemoveDuplicates(e.target.checked)} />
                             <label htmlFor="removeDuplicates">Remove Duplicates</label>
@@ -444,22 +512,45 @@ const Dashboard = () => {
                             <label htmlFor="extractNumericData">Extract Numeric Data</label>
                         </div>
                         <button onClick={handleRefresh} className="refresh-button" style={isSpinning ? {transform: 'rotate(360deg)'} : {}}>
-                          <FaSyncAlt color="#007bff" size="1em"/>
+                            <FaSyncAlt color="#007bff" size="1em"/>
                         </button>
                     </div>
                   </div>
 
                 <div className="status-message-container">
-                  <ul style={{listStyleType: "none", padding: "0px"}}>
+                    <ul style={{listStyleType: "none", padding: "0px"}}>
                     <h2 className="status-message-header">Data Status</h2>
-
                     <li className="status-message" style={{ display: fileUploaded ? 'block' : 'none' }}>✅ .csv uploaded!</li>
-                      {removeDuplicates && (<li className="status-message" style={{ display: duplicateRemovalComplete ? 'block' : 'none' }}>✅ Duplicate Removal Cleaning Complete!</li>)}
-                      {handleMissingValues && (<li className="status-message" style={{ display: missingValueHandlingComplete ? 'block' : 'none' }}>✅ Missing Value Handling Cleaning Complete!</li>)}
-                      {identifyNumericColumns && (<li className="status-message" style={{ display: numericColumnIdentificationComplete ? 'block' : 'none' }}>✅ Numeric Column identification Cleaning Complete!</li>)}
-                      {extractNumericData && (<li className="status-message" style={{ display: extractionOfNumericDataComplete ? 'block' : 'none' }}>✅ Extraction of Numeric Data Complete!</li>)}
-                  
-                  </ul>
+                        {removeDuplicates && (<li className="status-message" style={{ display: duplicateRemovalComplete ? 'block' : 'none' }}>✅ Duplicate Removal Cleaning Complete! {duplicateCount > 0 ? `(${duplicateCount} duplicates removed)` : "(0 duplicates removed)"}</li>)}
+                        {handleMissingValues && (<li className="status-message" style={{ display: missingValueHandlingComplete ? 'block' : 'none' }}>✅ Missing Value Handling Cleaning Complete! {missingValueCount > 0 ? `(${missingValueCount} missing values handled)`: "(0 missing values handled)"}</li>)}
+                        {identifyNumericColumns && (<li className="status-message" style={{ display: numericColumnIdentificationComplete ? 'block' : 'none' }}>✅ Numeric Column identification Cleaning Complete! {numericColumnCount > 0 ? `(${numericColumnCount} numeric columns identified)` : "(0 numeric columns identified)"}</li>)}
+                        {extractNumericData && (<li className="status-message" style={{ display: extractionOfNumericDataComplete ? 'block' : 'none' }}>✅ Extraction of Numeric Data Complete! {extractedValueCount > 0 ? `(${extractedValueCount} numeric values extracted)` : "(0 numeric values extracted)"}</li>)}
+                    <div className="performance-stats-container">
+                        <h2 className="status-message-header">Performance Stats</h2>
+                        {csvUploadTime !== null && (
+                            <li className="status-message">
+                                <strong>File Upload Time: </strong> {csvUploadTime.toFixed(6)} seconds
+                            </li>
+                            )}
+                        {Object.entries(processingTimes).map(([key, time]) => {
+                            return time !== null && (
+                                <li key={key} className="status-message">
+                                    <strong>{key}: </strong> {time.toFixed(6)} seconds
+                                </li>
+                            );
+                        })}
+                        {summaryGenerationTime !== null && (
+                            <li className="status-message">
+                                <strong>Summary Generation Time: </strong> {summaryGenerationTime.toFixed(6)} seconds
+                            </li>
+                        )}
+                        {graphGenerationTime !== null && (
+                            <li className="status-message">
+                                <strong>Graph Generation Time: </strong> {graphGenerationTime.toFixed(6)} seconds
+                            </li>
+                        )}
+                    </div>
+                    </ul>
                 </div>
 
                 {data && (
@@ -479,15 +570,24 @@ const Dashboard = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {data.map((row, index) => (
-                                                <tr key={index}>
-                                                    {Object.values(row).map((value, cellIndex) => (
-                                                        <td key={cellIndex}>{value}</td>
-                                                    ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
+                                        {displayData.map((row, index) => (
+                                            <tr key={index}>
+                                                {Object.values(row).map((value, cellIndex) => (
+                                                    <td key={cellIndex}>{value}</td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                      </tbody>
                                     </table>
+                                    <div className="pagination-buttons">
+                                        <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page <= 1}>
+                                            Previous Page
+                                        </button>
+                                        <span>Page {page}</span>
+                                        <button onClick={() => setPage(prev => prev + 1)} disabled={displayData.length < page * itemsPerPage || data.length <= page * itemsPerPage}>
+                                        Next Page
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -525,49 +625,44 @@ const Dashboard = () => {
                 )}
 
                 {graphErrorMessage && (
-                  <h2 className="error-message">{graphErrorMessage}</h2>
-                  )}
+                    <h2 className="error-message">{graphErrorMessage}</h2>
+                    )}
                     {/* Bar Graph */}
-                  {graphData.bar && (
-                      <div className="chart-container">
-                          <h2>Bar Graph</h2>
-                          <Bar data={graphData.bar} options={{ responsive: true, maintainAspectRatio: false }} />
-                      </div>
-                  )}
-
-                  {/* Line Graph */}
-                  {graphData.line && (
-                      <div className="chart-container">
-                          <h2>Line Graph</h2>
-                          <Line data={graphData.line} options={{ responsive: true, maintainAspectRatio: false }} />
-                      </div>
-                  )}
-
-                  {/* Pie Chart */}
-                  {graphData.pie && (
-                      <div className="chart-container">
-                          <h2>Pie Chart</h2>
-                          <Pie data={graphData.pie} options={{ responsive: true, maintainAspectRatio: false }} />
-                      </div>
-                  )}
-
-                  {/* Scatter Plot */}
-                  {graphData.scatter && (
-                      <div className="chart-container">
-                          <h2>Scatter Plot</h2>
-                          <Scatter data={graphData.scatter} options={{ responsive: true, maintainAspectRatio: false }} />
-                      </div>
-                  )}
-
-                  {/* Radar Chart */}
-                  {graphData.radar && (
-                      <div className="chart-container">
-                          <h2>Radar Chart</h2>
-                          <Radar data={graphData.radar} options={{ responsive: true, maintainAspectRatio: false }} />
-                      </div>
-                  )}
-
-            </div>
+                    {graphData.bar && (
+                        <div className="chart-container">
+                            <h2>Bar Graph</h2>
+                            <Bar data={graphData.bar} options={{ responsive: true, maintainAspectRatio: false }} />
+                        </div>
+                    )}
+                    {/* Line Graph */}
+                    {graphData.line && (
+                        <div className="chart-container">
+                            <h2>Line Graph</h2>
+                            <Line data={graphData.line} options={{ responsive: true, maintainAspectRatio: false }} />
+                        </div>
+                    )}
+                    {/* Pie Chart */}
+                    {graphData.pie && (
+                        <div className="chart-container">
+                            <h2>Pie Chart</h2>
+                            <Pie data={graphData.pie} options={{ responsive: true, maintainAspectRatio: false }} />
+                        </div>
+                    )}
+                    {/* Scatter Plot */}
+                    {graphData.scatter && (
+                        <div className="chart-container">
+                            <h2>Scatter Plot</h2>
+                            <Scatter data={graphData.scatter} options={{ responsive: true, maintainAspectRatio: false }} />
+                        </div>
+                    )}
+                    {/* Radar Chart */}
+                    {graphData.radar && (
+                        <div className="chart-container">
+                            <h2>Radar Chart</h2>
+                            <Radar data={graphData.radar} options={{ responsive: true, maintainAspectRatio: false }} />
+                        </div>
+                    )}
+                </div>
             <div>
                 <footer className='footer'>
                     <FeedbackForm />

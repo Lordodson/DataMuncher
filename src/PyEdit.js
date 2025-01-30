@@ -26,6 +26,13 @@ const PyEdit = () => {
     setOutput(''); 
     try {
       Sk.importMainWithBody('<stdin>', false, code, true);
+      const outputLines = output.split('\n');
+      const plotData = outputLines.find(line => line.startsWith('PLOT_DATA:'));
+      if (plotData) {
+        const dataString = plotData.replace('PLOT_DATA:', '').trim();
+        const parsedData = JSON.parse(dataString);
+        setData(parsedData);
+      }
     } catch (error) {
       setOutput(`Error: ${error.message}`);
     }
@@ -76,8 +83,11 @@ const PyEdit = () => {
       <div className="content">
         <div className="pyedit-header">
           <p className="description">
-            Run and test your Python code directly in the browser. Enter your code, run it, and see the results instantly.
+            Run and test Python code here directly in the browser. 
+            Enter your code, run it, and see the results instantly.
           </p>
+            Note: This editor doesn't yet support python imports.
+            <p></p>
         </div>
 
         <div className="python-executor">

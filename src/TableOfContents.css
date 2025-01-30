@@ -5,31 +5,34 @@
 }
 
 .layout {
-    display: flex;
-    flex-direction: row;
+    display: flex;  
+    flex-direction: row; 
     height: 100%; 
 }
 
 .toc {
-    position: fixed;
-    top: 220px;
-    left: 0;
-    width: 100px; 
-    background-color: #f9f9f9;
-    border-right: 1px solid #ccc;
-    padding: 10px;
-    height: calc(100vh - 100px); 
-    overflow-y: auto;
-    z-index: 10; 
-}
-
-.content {
-    margin-left: 120px; 
+    position: sticky;
+    top: 0;
+    background-color: #f4f4f4;
+    border-right: 1px solid #ddd;
     padding: 20px;
     overflow-y: auto;
-    width: calc(100% - 220px); 
-    box-sizing: border-box;
-    height: 100%; 
+    z-index: 10;
+    font-family: Arial, sans-serif;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    width: 250px; 
+    flex-shrink: 0; 
+    height: 100vh; 
+}
+
+.toc h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+h2, h3 {
+    scroll-margin-top: 75px; 
 }
 
 .toc ul {
@@ -38,29 +41,39 @@
 }
 
 .toc ul li {
-    margin: 5px 0;
+    margin: 10px 0;
 }
 
 .toc ul li a {
     text-decoration: none;
     color: #007bff;
+    font-size: 1em;
 }
 
 .toc ul li a:hover {
     text-decoration: underline;
 }
 
+.toc-link {
+    display: block;
+    padding: 5px 0;
+    transition: color 0.3s;
+}
+
+.toc-link:hover {
+    color: #0056b3;
+}
+
+.content {
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+    margin: 0; 
+    box-sizing: border-box;
+}
+
 @media (max-width: 768px) {
     .toc {
-        position: fixed;
-        top: 180px; 
-        left: 0;
-        width: 100px; 
-        background-color: #f9f9f9;
-        border-right: 1px solid #ccc; 
-        padding: 10px;
-        height: calc(100vh - 100px); 
-        overflow-y: auto;
-        z-index: 10; 
+        width: 150px; 
     }
 }

@@ -35,11 +35,11 @@
 .import-box {
   border: 2px solid #61dafb;
   padding: 20px;
-  margin: 20px auto;
+  margin: 20px 0; 
   width: 50%;
   text-align: left;
   display: flex;
-  align-items: right;
+  align-items: flex-start; 
   flex-direction: column;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   border-radius: 5px;
@@ -82,7 +82,7 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-direction: column; /* Optional: if you want to stack items vertically */
+  flex-direction: column; 
 }
 
 .form-group {
@@ -154,7 +154,7 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-direction: column; /* Optional: if you want to stack items vertically */
+  flex-direction: column; 
 }
 
 .form-group {
@@ -179,40 +179,39 @@ h1 {
   margin-top: 10px;
 }
 
-/* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .App-header {
-    font-size: calc(8px + 2vmin);
+      font-size: calc(8px + 2vmin);
   }
 
   .import-box {
-    width: 80%;
+      width: 80%;
   }
 
   .login-form, .signup-form {
-    width: 90%;
+      width: 90%;
   }
 
   .home-logo {
-    height: 80px;
+      height: 80px;
   }
 }
 
 @media (max-width: 480px) {
   .App-header {
-    font-size: calc(6px + 2vmin);
+      font-size: calc(6px + 2vmin);
   }
 
   .import-box {
-    width: 90%;
+      width: 90%;
   }
 
   .login-form, .signup-form {
-    width: 95%;
+      width: 95%;
   }
 
   .home-logo {
-    height: 60px;
+      height: 60px;
   }
 }
 
@@ -368,21 +367,21 @@ p {
 
 @media (max-width: 1000px) {
   .menu-toggle {
-    display: block;
+      display: block;
   }
 
   .navbar-list {
-    display: none;
-    flex-direction: column;
-    background-color: #333;
-    position: absolute;
-    top: 60px;
-    left: 0;
-    width: 100%;
+      display: none;
+      flex-direction: column;
+      background-color: #333;
+      position: absolute;
+      top: 60px;
+      left: 0;
+      width: 100%;
   }
 
   .navbar-list.open {
-    display: flex;
+      display: flex;
   }
 }
 
@@ -390,12 +389,12 @@ p {
 
 @media (max-width: 1000px) {
   .navbar-list {
-    flex-direction: column;
-    align-items: center;
+      flex-direction: column;
+      align-items: center;
   }
 
   .navbar-link {
-    padding: 1rem;
+      padding: 1rem;
   }
 }
 
@@ -507,7 +506,6 @@ p {
 }
 
 .footer {
-  /* position: fixed; */
   bottom: 0;
   width: 100%;
   background-color: #f8f9fa;
@@ -576,7 +574,6 @@ p {
   background-color: #0056b3;
 }
 
-/* dark mode */
 :root {
   --background-color: white;
   --text-color: black;
@@ -612,8 +609,11 @@ p {
   border-radius: 3px;
 }
 
+
 .toggle-options-container {
   display: flex;
+  position: fixed;
+  right: 0;
   flex-direction: column;
   align-items: flex-start;
   width: fit-content;
@@ -622,7 +622,31 @@ p {
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  transition: right 0.3s ease;
 }
+.toggle-options-container.collapsed {
+  right: -300px;
+}
+
+.toggle-options-container-dash {
+  display: flex;
+  position: fixed;
+  right: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  width: fit-content;
+  padding: 20px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  transition: right 0.3s ease;
+}
+.toggle-options-container-dash.collapsed {
+  right: -210px;
+}
+
+
 .toggle-option {
   display: flex;
   align-items: center;
@@ -634,31 +658,37 @@ p {
 }
 
 .import-controls {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 20px;
-    width: 100%;
-    margin-top: 20px;
-    justify-content: space-between; /* Added to space out items */
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  width: 100%;
+  margin-top: 20px;
+  justify-content: space-between;
 }
 
-
+.toggle-button {
+background: none;
+border: none;
+cursor: pointer;
+margin-bottom: 10px;
+font-size: 1.2em;
+}
 
 .refresh-button {
   background-color: transparent;
   border: none;
-  padding: 10px 15px;
+  padding: 0px 0px;
   border-radius: 4px;
   cursor: pointer;
   margin-top: 10px;
-  margin-left: auto;
   font-size: 16px;
   transition: transform 0.3s ease, scale 0.2s ease;
+  align-self: flex-start; 
 }
 
 .refresh-button:hover {
-background-color: #f0f0f0;
-transform: scale(1.2);
+  background-color: #f0f0f0;
+  transform: scale(1.2);
 }
 
 .label-column-selector {
@@ -669,6 +699,7 @@ transform: scale(1.2);
   margin-bottom: 10px;
 }
 
-
-
-
+.performance-stats-container {
+margin-top: 10px;
+padding-left: 10px;
+}

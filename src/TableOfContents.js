@@ -16,11 +16,11 @@ const TableOfContents = () => {
 
     return (
         <nav className="toc">
-            <h4>Table of Contents</h4>
+            <h1>Table of Contents</h1>
             <ul>
                 {headings.map((heading) => (
                     <li key={heading.id} className={`toc-${heading.level.toLowerCase()}`}>
-                        <a href={`#${heading.id}`}>{heading.text}</a>
+                        <a href={`#${heading.id}`} className="toc-link">{heading.text}</a>
                     </li>
                 ))}
             </ul>
