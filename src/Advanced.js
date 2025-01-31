@@ -47,7 +47,7 @@ const Advanced = () => {
         handleMissing: { label: 'Handle Missing Values', completed: false, message: null },
         handleOutliers: { label: 'Handle Outliers', completed: false, message: null },
     });
-    const [outlierThreshold, setOutlierThreshold] = useState(-0.5);
+    const [outlierThreshold, setOutlierThreshold] = useState(1.5);
     const [csvUploadTime, setCsvUploadTime] = useState(null);
     const [cleaningTimes, setCleaningTimes] = useState({
         trimColumns: null,
@@ -212,7 +212,7 @@ const Advanced = () => {
         try {
             let updatedData = [...data];
             let outlierCount = 0;
-        
+            
             for (const col of featureColumns) {
                 const values = data.map(row => row[col]).filter(value => typeof value === 'number' && !isNaN(value));
                 
@@ -222,7 +222,6 @@ const Advanced = () => {
                     const iqr = q3 - q1;
                     const lowerBound = q1 - threshold * iqr;
                     const upperBound = q3 + threshold * iqr;
-        
                     updatedData = updatedData.map(row => {
                         if (typeof row[col] === 'number' && !isNaN(row[col])) {
                             if (row[col] < lowerBound || row[col] > upperBound) {
@@ -690,7 +689,6 @@ const Advanced = () => {
             console.log("Features Length: ", features.length)
             console.log("Labels: ", labels)
             console.log("Labels Length: ", labels.length)
-
     
             if (features.some(row => row.some(val => isNaN(val))) || labels.some(val => isNaN(val))) {
                 console.error("Data contains NaN values, unable to create model.")
@@ -705,22 +703,35 @@ const Advanced = () => {
                 setModelAnalysis("Not enough data points to perform linear regression.");
                 return;
             }
-            
-            const featureValues = features.map(row => row[0]);
 
-            const featureVariance = ss.sampleVariance(featureValues);
-            console.log("Variance of Feature:", featureVariance);
-            if (featureVariance === 0) {
-                console.error("Feature column has zero variance, cannot create model.")
+            let validFeatures = [];
+
+            for(let col of featureColumns) {
+                const featureValues = data.map(row => parseFloat(row[col]));
+                const featureVariance = ss.sampleVariance(featureValues);
+
+                 if (featureVariance > 0) {
+                     validFeatures.push(col);
+                } else {
+                    console.log(`Skipping feature column ${col} as it has zero variance.`)
+                }
+            }
+            
+            if (validFeatures.length === 0) {
+                console.error("No feature columns with non-zero variance found, cannot create model.")
                 setModelPrediction(null);
-                setModelAnalysis("Feature column has zero variance, cannot create model.");
+                setModelAnalysis("No feature columns with non-zero variance found, cannot create model.");
                 return;
             }
 
-            console.log("Feature type:", typeof features[0][0]);
-            const regression = ss.linearRegression(features.map((f, i) => [f[0], labels[i]]));
+            console.log("Valid Features:", validFeatures);
+
+            const validFeatureValues = data.map(row => validFeatures.map(col => parseFloat(row[col])));
+            console.log("Feature type:", typeof validFeatureValues[0][0]);
+            const regression = ss.linearRegression(validFeatureValues.map((f, i) => [f[0], labels[i]]));
             const { m, b } = regression;
-            const correlation = ss.sampleCorrelation(featureValues, labels);
+            const correlation = ss.sampleCorrelation(validFeatureValues.map(f => f[0]), labels);
+
             console.log("Regression Model:", { m, b });
     
             setModelPrediction({ m, b });
@@ -896,8 +907,8 @@ const Advanced = () => {
                             </>
                         )}>
                         <div className="manual-prediction">
-                            <label>Enter feature values:</label>
-                            {featureColumns.map((feature, index) => (
+                            {/* <label>Enter feature values:</label> */}
+                            {/* {featureColumns.map((feature, index) => (
                                 <div key={index}>
                                     <label htmlFor={`knn-feature-${index}`}>{feature}:</label>
                                     <input
@@ -919,7 +930,7 @@ const Advanced = () => {
 
                                     />
                                 </div>
-                            ))}
+                            ))} */}
                         </div>
                         {knnPrediction && (
                             <div className="manual-prediction-result">
@@ -976,7 +987,7 @@ const Advanced = () => {
     };
 
     const renderCorrelationCard = () => {
-        if (!meanPrediction || !modelPrediction || !knnModel || !featureColumns.length) return null;
+        // if (!meanPrediction || !modelPrediction || !knnModel || !featureColumns.length) return null;
         return (
             <ModelPredictionCard title="Model Correlation and Insights" analysis={
                 <>
