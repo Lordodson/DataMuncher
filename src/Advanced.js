@@ -10,6 +10,8 @@ import FeedbackForm from './FeedbackForm';
 import muncher from './muncher.jpeg';
 import './App.css';
 import { FaSyncAlt, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import {kmeans} from 'ml-kmeans';
+import { SimpleLinearRegression } from 'ml-regression';
 
 const Advanced = () => {
     const [data, setData] = useState(null);
@@ -27,7 +29,7 @@ const Advanced = () => {
     const [showPopup, setShowPopup] = useState(false);
     const [displayData, setDisplayData] = useState([]);
     const [page, setPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [itemsPerPage, setItemsPerPage] = useState(1000);
     const [labelColumn, setLabelColumn] = useState(null);
     const chartRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -64,6 +66,32 @@ const Advanced = () => {
     
     const [optionsOpen, setOptionsOpen] = useState(true);
     const toggleOptions = () => setOptionsOpen(!optionsOpen);
+    const [tooltip, setTooltip] = useState(null);
+
+   const handleTooltipEnter = (content, e) => {
+        const rect = e.target.getBoundingClientRect();
+        const xPos = rect.left + window.scrollX;
+        const yPos = rect.bottom + window.scrollY;
+        setTooltip({
+           content: content,
+           top: yPos,
+           left: xPos
+        });
+    };
+
+    const handleTooltipLeave = () => {
+        setTooltip(null);
+    };
+
+    const renderTooltip = () => {
+        if (!tooltip) return null;
+
+        return (
+            <div className="tooltip-popup" style={{ top: tooltip.top - 150, left: tooltip.left - 340 }}>
+                 <p>{tooltip.content}</p>
+            </div>
+        );
+    };
 
     useEffect(() => {
         setStatusMessages(prevState => ({
@@ -77,16 +105,20 @@ const Advanced = () => {
         }));
     }, [originalData, trimColumnNamesFlag, handleCommasAsDecimalFlag, handleCategoricalDataFlag, handleMissingValuesFlag, handleOutliersFlag]);
 
-    useEffect(() => {
-        if (originalData) {
-            setDataReloaded(false);
-        }
-    }, [trimColumnNamesFlag, handleCommasAsDecimalFlag, handleCategoricalDataFlag, handleMissingValuesFlag, handleOutliersFlag, originalData, outlierThreshold]);
+   
+   useEffect(() => {
+      if (originalData) {
+        applyDataTuning();
+      }
+    }, [trimColumnNamesFlag, handleCommasAsDecimalFlag, handleCategoricalDataFlag, handleMissingValuesFlag, handleOutliersFlag, outlierThreshold, originalData]);
 
     const trimColumnNames = (data) => {
+        console.log("Before trimColumnNames:", data.length);
         if (!trimColumnNamesFlag) return { data, message: null };
     
-        if (!data || data.length === 0) {return { data, message: "No data to trim." };}
+        if (!data || data.length === 0) {
+            return { data, message: "No data to trim." };
+        }
         try {
             const columns = Object.keys(data[0]);
             const trimmedColumns = columns.map(col => col.trim());
@@ -98,8 +130,11 @@ const Advanced = () => {
                 });
                 return processedRow;
             });
+            console.log("After trimColumnNames:", trimmedData.length);
             return { data: trimmedData, message: `Trimmed ${columns.length} column names.` };
-        } catch (error) {return { data, message: `Error trimming column names: ${error}` };}
+        } catch (error) {
+            return { data, message: `Error trimming column names: ${error}` };
+        }
     };
     
     const parseValue = (value, treatCommasAsDecimal) => {
@@ -128,6 +163,7 @@ const Advanced = () => {
     };
     
     const handleCategoricalData = (data) => {
+        console.log("Before handleCategoricalData:", data.length);
         if (!handleCategoricalDataFlag) return { data, message: null };
     
         if (!data || data.length === 0) {
@@ -136,24 +172,26 @@ const Advanced = () => {
         try {
             let categoricalCount = 0;
             const updatedData = data.map(row => {
-            const newRow = {};
-            for (const key in row) {
-                if (typeof row[key] !== 'number' && typeof row[key] !== 'boolean' && row[key] !== null) {
-                    newRow[key] = String(row[key]);
-                    categoricalCount++
-                } else {
-                    newRow[key] = row[key];
+                const newRow = {};
+                for (const key in row) {
+                    if (typeof row[key] !== 'number' && typeof row[key] !== 'boolean' && row[key] !== null) {
+                        newRow[key] = String(row[key]);
+                        categoricalCount++;
+                    } else {
+                        newRow[key] = row[key];
+                    }
                 }
-            }
-            return newRow;
+                return newRow;
             });
-    
+            console.log("After handleCategoricalData:", updatedData.length);
             return { data: updatedData, message: `Handled ${categoricalCount} categorical values.` };
         } catch (error) {
             return { data, message: `Error handling categorical data: ${error}` };
         }
     };
+    
     const handleMissingValues = (data) => {
+        console.log("Before handleMissingValues:", data.length);
         if (!handleMissingValuesFlag) return { data, message: null };
     
         if (!data || data.length === 0) {
@@ -165,19 +203,63 @@ const Advanced = () => {
             let updatedData = [...data];
             let missingValueCount = 0;
     
-            columns.forEach(col => {
-                    const isNumericColumn = data.every(row => row[col] === null || row[col] === undefined || typeof row[col] === 'number');
+            for (const col of columns) {
+                const isNumericColumn = data.every(row => row[col] === null || row[col] === undefined || typeof row[col] === 'number');
                 if (isNumericColumn) {
-                    const validValues = data.filter(row => row[col] !== null && row[col] !== undefined).map(row => row[col]);
-                    const meanValue = validValues.length > 0 ? ss.mean(validValues) : null;
+                    const validRows = data.filter(row => row[col] !== null && row[col] !== undefined);
+                    if (validRows.length > 1) {
+                        const features = validRows.map(row => {
+                            const featureRow = [];
+                            for (const key of columns) {
+                                if (key !== col && (typeof row[key] === 'number' || row[key] === null || row[key] === undefined)) {
+                                    featureRow.push(row[key] === null || row[key] === undefined ? 0 : row[key]);
+                                }
+                            }
+                            return featureRow.length > 0 ? featureRow[0] : null;
+                        }).filter(value => typeof value === 'number');
     
-                    updatedData = updatedData.map(row => {
-                        if (row[col] === null || row[col] === undefined) {
-                            missingValueCount++;
-                            return { ...row, [col]: meanValue };
+                        const labels = validRows.map(row => row[col]).filter(row => typeof row === 'number');
+    
+                        if (features.length > 1 && labels.length > 1) {
+                            const regressionModel = new SimpleLinearRegression(features, labels);
+    
+                            updatedData = updatedData.map(row => {
+                                if (row[col] === null || row[col] === undefined) {
+                                    missingValueCount++;
+                                    const featureRow = [];
+                                    for (const key of columns) {
+                                        if (key !== col && (typeof row[key] === 'number' || row[key] === null || row[key] === undefined)) {
+                                            featureRow.push(row[key] === null || row[key] === undefined ? 0 : row[key]);
+                                        }
+                                    }
+                                    if (featureRow.length > 0) {
+                                        return { ...row, [col]: regressionModel.predict(featureRow[0]) };
+                                    }
+                                }
+                                return row;
+                            });
+                        } else {
+                            const validValues = data.filter(row => row[col] !== null && row[col] !== undefined).map(row => row[col]);
+                            const meanValue = validValues.length > 0 ? ss.mean(validValues) : null;
+                            updatedData = updatedData.map(row => {
+                                if (row[col] === null || row[col] === undefined) {
+                                    missingValueCount++;
+                                    return { ...row, [col]: meanValue };
+                                }
+                                return row;
+                            });
                         }
-                        return row;
-                    });
+                    } else {
+                        const validValues = data.filter(row => row[col] !== null && row[col] !== undefined).map(row => row[col]);
+                        const meanValue = validValues.length > 0 ? ss.mean(validValues) : null;
+                        updatedData = updatedData.map(row => {
+                            if (row[col] === null || row[col] === undefined) {
+                                missingValueCount++;
+                                return { ...row, [col]: meanValue };
+                            }
+                            return row;
+                        });
+                    }
                 } else {
                     const mostFrequent = data.reduce((acc, row) => {
                         if (row[col] != null && row[col] !== undefined) {
@@ -189,51 +271,117 @@ const Advanced = () => {
                         ? Object.keys(mostFrequent).reduce((a, b) => mostFrequent[a] > mostFrequent[b] ? a : b)
                         : null;
                     updatedData = updatedData.map(row => {
-                    if (row[col] === null || row[col] === undefined) {
-                        missingValueCount++;
-                        return { ...row, [col]: mostFrequentValue };
-                    }
-                    return row;
-                    });
-                }
-            });
-            return { data: updatedData, message: `Imputed ${missingValueCount} missing values.` };
-        } catch (error) {
-            return { data, message: `Error handling missing values: ${error}` };}
-    };
-
-    const handleOutliers = (data, featureColumns, threshold) => {
-        if (!handleOutliersFlag) return { data, message: null };
-    
-        if (!data || data.length === 0 || !featureColumns || featureColumns.length === 0) {
-            return { data, message: "No data or feature columns to process for outliers." };
-        }
-    
-        try {
-            let updatedData = [...data];
-            let outlierCount = 0;
-            
-            for (const col of featureColumns) {
-                const values = data.map(row => row[col]).filter(value => typeof value === 'number' && !isNaN(value));
-                
-                if (values.length > 5) {
-                    const q1 = ss.quantile(values, 0.25);
-                    const q3 = ss.quantile(values, 0.75);
-                    const iqr = q3 - q1;
-                    const lowerBound = q1 - threshold * iqr;
-                    const upperBound = q3 + threshold * iqr;
-                    updatedData = updatedData.map(row => {
-                        if (typeof row[col] === 'number' && !isNaN(row[col])) {
-                            if (row[col] < lowerBound || row[col] > upperBound) {
-                                outlierCount++;
-                                return { ...row, [col]: ss.median(values) };
-                            }
+                        if (row[col] === null || row[col] === undefined) {
+                            missingValueCount++;
+                            return { ...row, [col]: mostFrequentValue };
                         }
                         return row;
                     });
                 }
             }
-             return { data: updatedData, message: `Handled ${outlierCount} outliers using the IQR method.` };
+            console.log("After handleMissingValues:", updatedData.length);
+            return { data: updatedData, message: `Imputed ${missingValueCount} missing values.` };
+        } catch (error) {
+            return { data, message: `Error handling missing values: ${error}` };
+        }
+    };
+    
+    const deepCopy = (obj) => {
+        if (typeof obj !== "object" || obj === null) {
+          return obj;
+        }
+        const copy = Array.isArray(obj) ? [] : {};
+        for (let key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            copy[key] = deepCopy(obj[key]);
+          }
+        }
+        return copy;
+    };
+
+  const handleOutliers = (data, numericColumns, threshold, originalData, handleOutliersFlag, labelColumn) => {
+        console.log("Before handleOutliers:", data.length);
+        if (!handleOutliersFlag) {
+           
+            if(originalData) {
+                console.log('Resetting outliers');
+                const resetData = data.map((row, index) => {
+                    const originalRow = originalData[index];
+                    if(originalRow) {
+                        const newRow = {};
+                        for(let col in row) {
+                            newRow[col] = typeof originalRow[col] === 'number' && !isNaN(originalRow[col]) ? parseFloat(originalRow[col]) : row[col];
+                        }
+                        return newRow;
+                    }
+                    return row
+                });
+                return {data: resetData, message: `Outliers reset to original value.`};
+            }
+            return {data, message: "Outlier Handling Disabled"};
+        }
+
+        if (!data || data.length === 0 || !numericColumns || numericColumns.length === 0) {
+            return { data, message: "No data or numeric columns to process for outliers." };
+        }
+
+        try {
+            let updatedData = [...data];
+            let outlierCount = 0;
+
+            for (const col of numericColumns) {
+            console.log(`\nProcessing column: ${col}`);
+                 const values = data.map(row => row[col]).filter(value => typeof value === 'number' && !isNaN(value));
+                if (col !== labelColumn) {
+                   
+                      console.log(`\nProcessing feature column: ${col}`);
+                      console.log(`  Number of valid values: ${values.length}`);
+                        if (values.length > 5) {
+                                const q1 = ss.quantile(values, 0.25);
+                                const q3 = ss.quantile(values, 0.75);
+                                const iqr = q3 - q1;
+                                const lowerBound = q1 - (threshold * iqr);
+                                const upperBound = q3 + (threshold * iqr);
+                                console.log(`  Q1: ${q1}, Q3: ${q3}, IQR: ${iqr}, Lower Bound: ${lowerBound}, Upper Bound: ${upperBound}`);
+
+                               
+                                const inlierValues = values.filter(val => val >= lowerBound && val <= upperBound);
+                                const meanOfInliers = inlierValues.length > 0 ? ss.mean(inlierValues) : null;
+                                console.log(`  Number of inliers: ${inlierValues.length}, Mean of Inliers: ${meanOfInliers}`);
+
+
+                                updatedData = updatedData.map(row => {
+                                    const value = row[col];
+                                    if (typeof value === 'number' && !isNaN(value)) {
+                                        if (value < lowerBound || value > upperBound) {
+                                            outlierCount++;
+                                            console.log(`    Outlier detected: Value: ${value}, Replaced with mean: ${meanOfInliers}`);
+                                            return { ...row, [col]: meanOfInliers };
+                                        }
+                                    }
+                                    return row;
+                                });
+                        }
+                  } else {
+                       
+                      console.log(`\nProcessing label column: ${col}`);
+                        const meanLabel = values.length > 0 ? ss.mean(values) : null;
+                         console.log(`Mean of label column : ${meanLabel}`);
+                        updatedData = updatedData.map(row => {
+                            const value = row[col];
+                            if(typeof value === 'number' && !isNaN(value)) {
+                              if (meanLabel !== null && (value < (meanLabel/10) || value > (meanLabel*10))){
+                                      outlierCount++;
+                                    console.log(`    Outlier detected in label column: Value: ${value}, Replaced with mean: ${meanLabel}`);
+                                     return { ...row, [col]: meanLabel };
+                                }
+                            }
+                             return row
+                       });
+                  }
+                }
+             console.log("After handleOutliers:", updatedData.length);
+             return { data: updatedData, message: `Handled ${outlierCount} outliers using IQR method.` };
         } catch (error) {
             return { data, message: `Error handling outliers: ${error}` };
         }
@@ -258,7 +406,6 @@ const Advanced = () => {
         setIsSpinning(true);
         setIsLoading(true);
         setLoadingMessage("Applying data cleaning and tuning...");
-        setDataReloaded(false);
         setStatusMessages(prevState => ({
             ...prevState,
             trimColumns: { ...prevState.trimColumns, completed: false, message: null },
@@ -267,45 +414,16 @@ const Advanced = () => {
             handleMissing: { ...prevState.handleMissing, completed: false, message: null },
             handleOutliers: { ...prevState.handleOutliers, completed: false, message: null },
         }));
+        
+       
+        let tunedData = [...originalData];
 
-        let tunedData = [...rawDataFromUpload];
-        let startTime;
-        let endTime;
-        startTime = performance.now();
-        let trimResult = trimColumnNames(tunedData);
-        tunedData = trimResult.data;
-        endTime = performance.now();
-        setCleaningTimes(prev => ({ ...prev, trimColumns: (endTime - startTime) / 1000 }));
-        startTime = performance.now();
-        let commasData = null;
-        if (handleCommasAsDecimalFlag) {
-            commasData = tunedData.map(row => processRow(row, handleCommasAsDecimalFlag));
-        } else {
-            commasData = tunedData;
-        }
-        endTime = performance.now();
-        setCleaningTimes(prev => ({ ...prev, handleCommas: (endTime - startTime) / 1000 }));
-
-        startTime = performance.now();
-        let categoricalResult = handleCategoricalData(commasData);
-        tunedData = categoricalResult.data
-        endTime = performance.now();
-        setCleaningTimes(prev => ({ ...prev, handleCategorical: (endTime - startTime) / 1000 }));
-        startTime = performance.now();
-        let missingResult = handleMissingValues(tunedData);
-        tunedData = missingResult.data
-        endTime = performance.now();
-        setCleaningTimes(prev => ({ ...prev, handleMissing: (endTime - startTime) / 1000 }));
-        const { featureColumns: calculatedFeatureColumns, labelColumn } = selectColumns(tunedData);
-        setFeatureColumns(calculatedFeatureColumns);
-        setLabelColumn(labelColumn);
-        startTime = performance.now();
-        let outliersResult = handleOutliers(tunedData, calculatedFeatureColumns, outlierThreshold);
-        tunedData = outliersResult.data;
-        endTime = performance.now();
-        setCleaningTimes(prev => ({ ...prev, handleOutliers: (endTime - startTime) / 1000 }));
-
-        const validationIssues = validateData(tunedData, calculatedFeatureColumns, labelColumn);
+         const { data: processedData, messages } = preprocessDataWithMessages(tunedData, handleCommasAsDecimalFlag);
+         const { featureColumns, labelColumn } = selectColumns(processedData);
+         setFeatureColumns(featureColumns);
+         setLabelColumn(labelColumn);
+        
+        const validationIssues = validateData(processedData, featureColumns, labelColumn);
 
         if (validationIssues.length > 0) {
             console.error("Validation Issues:", validationIssues);
@@ -314,106 +432,72 @@ const Advanced = () => {
             setTimeout(() => setIsSpinning(false), 300);
             setLoadingMessage('');
         } else {
-            console.log("Features:", calculatedFeatureColumns);
-            console.log("Label:", labelColumn);
-            console.log("Cleaned and Tuned Data:", tunedData);
-            setData(tunedData);
-            setDisplayData(tunedData.slice(0, itemsPerPage));
+           console.log("Features:", featureColumns);
+           console.log("Label:", labelColumn);
+           console.log("Cleaned and Tuned Data:", processedData);
+          
+            setData(processedData);
+           const displayedData = processedData.slice(0, itemsPerPage);
+            setDisplayData(displayedData);
             let meanStartTime = performance.now()
-            createMeanPrediction(tunedData.slice(0, itemsPerPage));
+           createMeanPrediction(processedData);
             let meanEndTime = performance.now()
             let linearStartTime = performance.now();
-            createLinearRegression(tunedData.slice(0, itemsPerPage), calculatedFeatureColumns, labelColumn);
-            let linearEndTime = performance.now();
+            createLinearRegression(processedData, featureColumns, labelColumn);
+           let linearEndTime = performance.now();
             let knnStartTime = performance.now();
-            createKNNModel(tunedData.slice(0, itemsPerPage), calculatedFeatureColumns, labelColumn);
+            createKNNModel(processedData, featureColumns, labelColumn);
             let knnEndTime = performance.now()
 
-            setModelPredictionTimes(prev => ({
+           setModelPredictionTimes(prev => ({
                 ...prev,
-                mean: (meanEndTime - meanStartTime) / 1000,
-                linearRegression: (linearEndTime - linearStartTime) / 1000,
+               mean: (meanEndTime - meanStartTime) / 1000,
+               linearRegression: (linearEndTime - linearStartTime) / 1000,
                 knn: (knnEndTime - knnStartTime) / 1000
             }));
 
             setShowPopup(false);
-            setIsLoading(false);
-            setTimeout(() => setIsSpinning(false), 300);
-            setLoadingMessage('');
-            setDataReloaded(true);
-            setStatusMessages(prevState => ({
+             setIsLoading(false);
+             setTimeout(() => setIsSpinning(false), 300);
+             setLoadingMessage('');
+             setStatusMessages(prevState => ({
                 ...prevState,
-                trimColumns: { ...prevState.trimColumns, completed: trimColumnNamesFlag, message: trimResult.message },
+                 trimColumns: { ...prevState.trimColumns, completed: trimColumnNamesFlag, message: messages.trimMessage },
                 handleCommas: { ...prevState.handleCommas, completed: handleCommasAsDecimalFlag, message: handleCommasAsDecimalFlag ? 'Commas treated as decimals.' : null },
-                handleCategorical: { ...prevState.handleCategorical, completed: handleCategoricalDataFlag, message: categoricalResult.message },
-                handleMissing: { ...prevState.handleMissing, completed: handleMissingValuesFlag, message: missingResult.message },
-                handleOutliers: { ...prevState.handleOutliers, completed: handleOutliersFlag, message: outliersResult.message },
+               handleCategorical: { ...prevState.handleCategorical, completed: handleCategoricalDataFlag, message: messages.categoricalMessage },
+                 handleMissing: { ...prevState.handleMissing, completed: handleMissingValuesFlag, message: messages.missingMessage },
+                 handleOutliers: { ...prevState.handleOutliers, completed: handleOutliersFlag, message: messages.outlierMessage },
             }));
         }
     };
 
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
-
+    
         if (file && file.name.endsWith('.csv')) {
             setIsLoading(true);
             setLoadingMessage("Loading and processing data...");
-
+    
             const startTime = performance.now();
             Papa.parse(file, {
                 complete: (result) => {
                     const endTime = performance.now();
-                    setCsvUploadTime((endTime - startTime) / 1000)
+                    setCsvUploadTime((endTime - startTime) / 1000);
                     const rawData = result.data;
+                    console.log("Parsed Data Length:", rawData.length);
                     setRawDataFromUpload(rawData);
-        
-                    let detectedDelimiter = ','; 
-                    if (rawData.length > 1 && typeof rawData[0] === 'object') {
-                        const firstRow = Object.values(rawData[0]).join(''); 
-                        if (firstRow.includes(';')) {
-                            detectedDelimiter = ';'; 
-                        }
-                    }
-                    console.log("Detected Delimiter:", detectedDelimiter);
-        
-                    const transformedData = rawData.map(row => {
-                        const newRow = {};
-                        for (const key in row) {
-                            if (row.hasOwnProperty(key)) {
-                                if (typeof row[key] === 'string' && /^[0-9,.]+$/.test(row[key])) {
-                                    let cleanedValue = row[key];
-                                    const commaReplaced = row[key].replace(',', '.');
-                                    const commaNum = parseFloat(commaReplaced);
-                                    const periodReplaced = row[key].replace('.', ',');
-                                    const periodNum = parseFloat(periodReplaced);
-        
-                                    if(!isNaN(commaNum)) {
-                                        cleanedValue = commaReplaced;
-                                        newRow[key] = commaNum;
-                                    } else if (!isNaN(periodNum)) {
-                                        cleanedValue = periodReplaced;
-                                        newRow[key] = periodNum;
-                                    } else {
-                                        newRow[key] = row[key];
-                                    }
-        
-                                } else {
-                                    newRow[key] = row[key]; 
-                                }
-                            }
-                        }
-                        return newRow;
-                    });
-        
-                    setOriginalData(transformedData);
-        
-                    const {data: cleanedData, messages} = preprocessDataWithMessages(transformedData, true);
-        
+
+                  console.log("Transformed Data Length:", rawData.length);
+                    setOriginalData(rawData);
+    
+                    const { data: cleanedData, messages } = preprocessDataWithMessages(rawData, true);
+                    console.log("Cleaned Data Length:", cleanedData.length);
+    
                     const { featureColumns, labelColumn } = selectColumns(cleanedData);
                     setFeatureColumns(featureColumns);
                     setLabelColumn(labelColumn);
                     const validationIssues = validateData(cleanedData, featureColumns, labelColumn);
-        
+    
                     if (validationIssues.length > 0) {
                         console.error("Validation Issues:", validationIssues);
                         alert("Validation Errors:\n" + validationIssues.join("\n"));
@@ -422,29 +506,28 @@ const Advanced = () => {
                     } else {
                         console.log("Features:", featureColumns);
                         console.log("Label:", labelColumn);
-                        console.log("Cleaned and Validated Data:", cleanedData);
+                        console.log("Cleaned and Validated Data Length:", cleanedData.length);
                         setData(cleanedData);
                         setDisplayData(cleanedData.slice(0, itemsPerPage));
-                        let meanStartTime = performance.now()
-                        createMeanPrediction(cleanedData.slice(0, itemsPerPage));
-                        let meanEndTime = performance.now()
+                        let meanStartTime = performance.now();
+                        createMeanPrediction(cleanedData);
+                        let meanEndTime = performance.now();
                         let linearStartTime = performance.now();
-                        createLinearRegression(cleanedData.slice(0, itemsPerPage), featureColumns, labelColumn);
+                        createLinearRegression(cleanedData, featureColumns, labelColumn);
                         let linearEndTime = performance.now();
                         let knnStartTime = performance.now();
-                        createKNNModel(cleanedData.slice(0, itemsPerPage), featureColumns, labelColumn);
-                        let knnEndTime = performance.now()
+                        createKNNModel(cleanedData, featureColumns, labelColumn);
+                        let knnEndTime = performance.now();
                         setModelPredictionTimes(prev => ({
                             ...prev,
                             mean: (meanEndTime - meanStartTime) / 1000,
                             linearRegression: (linearEndTime - linearStartTime) / 1000,
                             knn: (knnEndTime - knnStartTime) / 1000
                         }));
-        
+    
                         setShowPopup(false);
                         setIsLoading(false);
                         setLoadingMessage('');
-                        setDataReloaded(false);
                         setStatusMessages(prevState => ({
                             ...prevState,
                             fileUpload: { ...prevState.fileUpload, completed: true },
@@ -469,39 +552,46 @@ const Advanced = () => {
     const preprocessDataWithMessages = (data, treatCommasAsDecimal = false) => {
         if (!data || data.length === 0) return {data, messages: {}};
     
-        let processedData = [...data];
-    
-        let trimResult = trimColumnNames(processedData);
-        processedData = trimResult.data;
-        processedData = processedData.map(row => processRow(row, treatCommasAsDecimal));
-        let categoricalResult = handleCategoricalData(processedData);
-        processedData = categoricalResult.data
-        let missingResult = handleMissingValues(processedData);
-        processedData = missingResult.data;
-    
-        let outlierResult = {data: processedData, message: null};
-        if (handleOutliersFlag) {
-            const { featureColumns } = selectColumns(processedData);
-            outlierResult = handleOutliers(processedData, featureColumns, outlierThreshold);
-            processedData = outlierResult.data;
-        }
+          let processedData = [...data];
+        
+           let trimResult = trimColumnNames(processedData);
+           processedData = trimResult.data;
+            processedData = processedData.map(row => processRow(row, treatCommasAsDecimal));
+           let categoricalResult = handleCategoricalData(processedData);
+           processedData = categoricalResult.data
+         let missingResult = handleMissingValues(processedData);
+           processedData = missingResult.data;
+  
+          let outlierResult = {data: processedData, message: null};
+          if (handleOutliersFlag) {
+              const { numericColumns } = detectColumns(processedData);
+             
+              outlierResult = handleOutliers(processedData, numericColumns, outlierThreshold, deepCopy(originalData), handleOutliersFlag, labelColumn); 
+              processedData = outlierResult.data;
+          } else {
+                const { numericColumns } = detectColumns(processedData);
+               outlierResult = handleOutliers(processedData, numericColumns, outlierThreshold, deepCopy(originalData), handleOutliersFlag, labelColumn);
+               processedData = outlierResult.data;
+          }
         console.log("Data after preprocessDataWithMessages:", processedData) 
     
-        return {
+       return {
           data: processedData,
           messages: {
-            trimMessage: trimResult.message,
-            categoricalMessage: categoricalResult.message,
-            missingMessage: missingResult.message,
+             trimMessage: trimResult.message,
+             categoricalMessage: categoricalResult.message,
+             missingMessage: missingResult.message,
             outlierMessage: outlierResult.message,
-            }
+           }
         };
     };
 
     const loadMoreData = () => {
         const nextPage = page + 1;
-        const newData = data.slice(0, nextPage * itemsPerPage);
-        setDisplayData(newData);
+        const startIndex = page * itemsPerPage;
+        const endIndex = nextPage * itemsPerPage;
+        const newData = data.slice(startIndex, endIndex);
+        setDisplayData(prevData => [...prevData,...newData]);
         setPage(nextPage);
     };
     
@@ -568,29 +658,59 @@ const Advanced = () => {
         return issues;
     };
     
-    const selectColumns = (data) => {
-        const { numericColumns, nonNumericColumns } = detectColumns(data);
+  const selectColumns = (data) => {
+       const { numericColumns, nonNumericColumns } = detectColumns(data);
         console.log("Numeric Columns:", numericColumns);
         console.log("Non-Numeric Columns:", nonNumericColumns);
         console.log("Data inside Select Columns:", data);
-    
+
+    if (numericColumns.length === 0 && !handleCategoricalDataFlag) {
+      console.error("No numeric columns and Categorical data is OFF");
+      return { featureColumns: [], labelColumn: null, numericColumns: [] };
+    }
+        
+      if(handleCategoricalDataFlag) {
         if (numericColumns.length < 2) {
-            console.error("Not enough numeric columns to select a feature and label.");
-            return { featureColumns: [], labelColumn: null };
-        }
-    
-        const featureColumns = numericColumns.slice(0, -1);
-        const labelColumn = numericColumns.slice(-1)[0];
-        const validFeatureColumns = featureColumns.filter(col => data.every(row => !isNaN(row[col]) && row[col] !== null && row[col] !== ""));
-        const isLabelColumnNumeric = data.every(row => !isNaN(row[labelColumn]) && row[labelColumn] !== null && row[labelColumn] !== "");
-    
-        if (validFeatureColumns.length === 0 || !isLabelColumnNumeric) {
-            console.error("All feature columns must be numeric, and label column must also be numeric.");
-            return { featureColumns: [], labelColumn: null };
-        }
-    
-        return { featureColumns: validFeatureColumns, labelColumn };
+              console.error("Not enough numeric columns to select a feature and label.");
+             return { featureColumns: [], labelColumn: null, numericColumns: [] };
+          }
+
+             const featureColumns = numericColumns.slice(0, -1);
+             const labelColumn = numericColumns.slice(-1)[0];
+            const validFeatureColumns = featureColumns.filter(col => data.every(row => !isNaN(row[col]) && row[col] !== null && row[col] !== ""));
+             const isLabelColumnNumeric = data.every(row => !isNaN(row[labelColumn]) && row[labelColumn] !== null && row[labelColumn] !== "");
+            
+             if (validFeatureColumns.length === 0 || !isLabelColumnNumeric) {
+                  console.error("All feature columns must be numeric, and label column must also be numeric.");
+                 return { featureColumns: [], labelColumn: null, numericColumns: [] };
+             }
+         return { featureColumns: validFeatureColumns, labelColumn, numericColumns };
+      } else {
+       
+
+          if (numericColumns.length === 0) {
+              console.error("No numeric columns to select a label");
+            return { featureColumns: [], labelColumn: null, numericColumns: [] };
+          }
+           const labelColumn = numericColumns.slice(-1)[0];
+
+            if (nonNumericColumns.length === 0) {
+                 console.error("No feature columns for Linear Regression when categorical is OFF");
+                 return { featureColumns: [], labelColumn: null, numericColumns: [] };
+             }
+            
+          const validFeatureColumns =  [...numericColumns.slice(0, -1), ...nonNumericColumns].filter(col => data.every(row => row[col] !== null && row[col] !== undefined));
+
+             const isLabelColumnNumeric = data.every(row => !isNaN(row[labelColumn]) && row[labelColumn] !== null && row[labelColumn] !== "");
+         if (validFeatureColumns.length === 0 || !isLabelColumnNumeric) {
+                console.error("All feature columns must be numeric, and label column must also be numeric.");
+                return { featureColumns: [], labelColumn: null, numericColumns: [] };
+          }
+        return { featureColumns: validFeatureColumns, labelColumn, numericColumns };
+      }
+
     };
+
 
     const manualPredict = (x) => {
         if (!modelPrediction) {
@@ -668,7 +788,7 @@ const Advanced = () => {
         }
     };
     
-    const createLinearRegression = (data, featureColumns, labelColumn) => {
+  const createLinearRegression = (data, featureColumns, labelColumn) => {
         if (!featureColumns || featureColumns.length === 0 || !labelColumn) {
             console.error("Invalid feature or label columns for linear regression.");
             setModelPrediction(null);
@@ -681,7 +801,12 @@ const Advanced = () => {
             console.log("Features Columns: ", featureColumns)
             console.log("Label Column: ", labelColumn)
             
-            const features = data.map(row => featureColumns.map(col => parseFloat(row[col])));
+            const features = data.map(row => featureColumns.map(col => {
+                  if (typeof row[col] === 'number' ) {
+                      return parseFloat(row[col]);
+                  }
+                return row[col]
+              }));
             const labels = data.map(row => parseFloat(row[labelColumn]));
 
             console.log("Data Length:", data.length)
@@ -689,8 +814,7 @@ const Advanced = () => {
             console.log("Features Length: ", features.length)
             console.log("Labels: ", labels)
             console.log("Labels Length: ", labels.length)
-    
-            if (features.some(row => row.some(val => isNaN(val))) || labels.some(val => isNaN(val))) {
+             if (features.some(row => row.some(val => isNaN(val) && typeof val === 'number' )) || labels.some(val => isNaN(val))) {
                 console.error("Data contains NaN values, unable to create model.")
                 setModelPrediction(null);
                 setModelAnalysis(`Linear regression failed to create: Data contains NaN values`);
@@ -707,14 +831,17 @@ const Advanced = () => {
             let validFeatures = [];
 
             for(let col of featureColumns) {
-                const featureValues = data.map(row => parseFloat(row[col]));
-                const featureVariance = ss.sampleVariance(featureValues);
-
-                 if (featureVariance > 0) {
-                     validFeatures.push(col);
-                } else {
-                    console.log(`Skipping feature column ${col} as it has zero variance.`)
-                }
+                  if(typeof data[0][col] === 'number') {
+                        const featureValues = data.map(row => parseFloat(row[col]));
+                        const featureVariance = ss.sampleVariance(featureValues);
+                    if (featureVariance > 0) {
+                        validFeatures.push(col);
+                    } else {
+                       console.log(`Skipping feature column ${col} as it has zero variance.`)
+                     }
+                   } else {
+                        validFeatures.push(col)
+                   }
             }
             
             if (validFeatures.length === 0) {
@@ -726,11 +853,29 @@ const Advanced = () => {
 
             console.log("Valid Features:", validFeatures);
 
-            const validFeatureValues = data.map(row => validFeatures.map(col => parseFloat(row[col])));
+            const validFeatureValues = data.map(row => validFeatures.map(col => {
+                if(typeof row[col] === 'number') {
+                   return parseFloat(row[col])
+               }
+                return row[col];
+            }));
+          
             console.log("Feature type:", typeof validFeatureValues[0][0]);
-            const regression = ss.linearRegression(validFeatureValues.map((f, i) => [f[0], labels[i]]));
-            const { m, b } = regression;
-            const correlation = ss.sampleCorrelation(validFeatureValues.map(f => f[0]), labels);
+
+            const regression = ss.linearRegression(validFeatureValues.map((f, i) => {
+                   if (typeof f[0] === 'number') {
+                           return [f[0], labels[i]];
+                    } else {
+                     return [0, labels[i]];
+                    }
+            }));
+           const { m, b } = regression;
+            const correlation = ss.sampleCorrelation(validFeatureValues.map(f =>{
+               if(typeof f[0] === 'number') {
+                 return f[0]
+               }
+               return 0
+            }), labels);
 
             console.log("Regression Model:", { m, b });
     
@@ -987,9 +1132,12 @@ const Advanced = () => {
     };
 
     const renderCorrelationCard = () => {
-        // if (!meanPrediction || !modelPrediction || !knnModel || !featureColumns.length) return null;
-        return (
-            <ModelPredictionCard title="Model Correlation and Insights" analysis={
+        if (!data || !featureColumns || featureColumns.length === 0) return null;
+
+       return (
+        <ModelPredictionCard
+            title="Model Correlation and Insights"
+            analysis={
                 <>
                     <p className="analysis-text">
                         <strong>Mean-Based Prediction:</strong>
@@ -1018,12 +1166,83 @@ const Advanced = () => {
                     <div className="additional-insights">
                     </div>
                 </>
-            } />
-        );
-    };
+            }
+          meanPrediction={meanPrediction}
+          modelPrediction={modelPrediction}
+          knnPrediction={knnPrediction}
+        />
+    );
+  };
 
-    const renderMeanPredictionCard = () => {
+  const renderHeatmap = () => {
+    if (!data || !featureColumns || featureColumns.length === 0) return null;
+     const numericData = data.map(row => featureColumns.map(col => parseFloat(row[col])));
+    const corrMatrix = featureColumns.map((col1, i) =>
+       featureColumns.map((col2, j) => {
+            if (i === j) { return 1}
+            return ss.sampleCorrelation(numericData.map(row => row[i]),numericData.map(row => row[j]))
+        })
+    );
+    const labels = featureColumns;
+    return (
+        <div className="heatmap-container">
+            <h2 className="status-message-header">Feature Correlation Matrix</h2>
+            <ChartComponent
+                    type="heatmap"
+                        data={{
+                        labels,
+                        datasets: [{
+                            data: corrMatrix.map((row, i) => row.map((val, j) => ({
+                                x: labels[j],
+                                y: labels[i],
+                                value: val
+                                }))).flat()
+                        }]
+                    }}
+                        options={{
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Features'
+                                    }
+                            },
+                                y: {
+                                    title: {
+                                        display: true,
+                                    text: 'Features'
+                                    }
+                            }
+                            },
+                            plugins: {
+                                title: {
+                                    display: false,
+                                text: 'Feature Correlation Matrix'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                    label: function(context) {
+                                        return `${context.parsed.y} corr: ${context.parsed.value.toFixed(2)}`
+                                    }
+                                }
+                            }
+                            }
+                        }}
+                    />
+        </div>
+    )
+};
+
+  const renderMeanPredictionCard = () => {
         if (meanPrediction === null) return null;
+         const labelName = Object.keys(displayData[0]).pop();
+         const labels = displayData.map(row => parseFloat(row[labelName]));
+          const histogramData = labels.reduce((acc, value) => {
+            acc[value] = (acc[value] || 0) + 1;
+             return acc;
+          }, {});
+        const histogramLabels = Object.keys(histogramData);
+        const histogramValues = Object.values(histogramData);
         return (
             <ModelPredictionCard
                 title="Average Prediction (Mean-based)"
@@ -1033,10 +1252,52 @@ const Advanced = () => {
                     </p>
                 )}
             >
-                <div className="prediction-result">
-                    <strong>Predicted Value:</strong> {meanPrediction.toFixed(2)}
-                </div>
-            </ModelPredictionCard>
+              <div className="prediction-result">
+                    <ChartComponent
+                        type="bar"
+                        data={{
+                            labels: histogramLabels,
+                            datasets: [{
+                                label: 'Frequency',
+                                data: histogramValues,
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                            },
+                            {
+                                label: 'Mean',
+                                type: 'line',
+                                data: histogramLabels.map(() => meanPrediction),
+                                borderColor: 'red',
+                                borderWidth: 2,
+                                fill: false,
+                                pointRadius: 0,
+                            }]
+                        }}
+                         options={{
+                                  scales: {
+                                    x: {
+                                     title: {
+                                         display: true,
+                                          text: 'Label Value'
+                                       }
+                                    },
+                                    y: {
+                                        title: {
+                                           display: true,
+                                            text: 'Frequency'
+                                        }
+                                      }
+                                  },
+                                    plugins: {
+                                      title: {
+                                         display: true,
+                                        text: 'Distribution of Labels'
+                                    }
+                                 }
+                             }}
+                    />
+                 <strong>Predicted Value:</strong> {meanPrediction.toFixed(2)}
+               </div>
+           </ModelPredictionCard>
         );
     };
 
@@ -1182,23 +1443,53 @@ return (
                     {optionsOpen ? <FaArrowRight /> : <FaArrowLeft />}
                     </div>
                 <p style={{fontSize: '1em'}}>Cleaning Options</p>
-                <div className="toggle-option">
+                 {/* <div className="toggle-option"
+                   onMouseEnter={(e) => {
+                        const rect = e.target.getBoundingClientRect();
+                         handleTooltipEnter("Trims leading and trailing spaces from column names to ensure consistency.", e);
+                        }}
+                    onMouseLeave={handleTooltipLeave}
+                >
                     <input type="checkbox" id="trimColumns" checked={trimColumnNamesFlag} onChange={() => setTrimColumnNamesFlag(!trimColumnNamesFlag)} />
                     <label htmlFor="trimColumns">Trim Column Names</label>
-                </div>
-                <div className="toggle-option">
+                </div> */}
+                <div className="toggle-option"
+                     onMouseEnter={(e) => {
+                        const rect = e.target.getBoundingClientRect();
+                         handleTooltipEnter("Treats commas as decimal points (e.g., converts '1,23' to 1.23). Helpful if your data uses commas for decimal places.", e);
+                         }}
+                     onMouseLeave={handleTooltipLeave}
+                >
                     <input type="checkbox" id="handleCommas" checked={handleCommasAsDecimalFlag} onChange={() => setHandleCommasAsDecimalFlag(!handleCommasAsDecimalFlag)} />
                     <label htmlFor="handleCommas">Treat Commas as Decimal</label>
                 </div>
-                <div className="toggle-option">
+                <div className="toggle-option"
+                     onMouseEnter={(e) => {
+                        const rect = e.target.getBoundingClientRect();
+                         handleTooltipEnter("Converts non-numeric data to strings for processing, such as 'Red', 'Blue', 'Green'", e);
+                         }}
+                     onMouseLeave={handleTooltipLeave}
+                >
                     <input type="checkbox" id="handleCategorical" checked={handleCategoricalDataFlag} onChange={() => setHandleCategoricalDataFlag(!handleCategoricalDataFlag)} />
                     <label htmlFor="handleCategorical">Handle Categorical Data</label>
                 </div>
-                <div className="toggle-option">
+                <div className="toggle-option"
+                     onMouseEnter={(e) => {
+                        const rect = e.target.getBoundingClientRect();
+                        handleTooltipEnter("Replaces missing values using a simple linear regression model trained to predict values from a single related feature (if enough data is available). If it cannot create a linear regression for imputation, then it is replaced with the mean (for numerical columns) using simple-statistics' `ss.mean()` or the most frequent value (for non-numerical columns).", e);
+                     }}
+                     onMouseLeave={handleTooltipLeave}
+                >
                     <input type="checkbox" id="handleMissing" checked={handleMissingValuesFlag} onChange={() => setHandleMissingValuesFlag(!handleMissingValuesFlag)} />
                     <label htmlFor="handleMissing">Handle Missing Values</label>
                 </div>
-                <div className="toggle-option">
+                 <div className="toggle-option"
+                    onMouseEnter={(e) => {
+                         const rect = e.target.getBoundingClientRect();
+                        handleTooltipEnter("Detects and handles outliers using a data-driven process. Outliers are identified using the Interquartile Range (IQR), a statistical method to find unusual data points. Then, the outlier values are replaced with the average of all the normal values in that column. By transforming the data based on its characteristics, this step performs feature engineering, and makes the data more suitable for machine learning algorithms.", e);
+                    }}
+                    onMouseLeave={handleTooltipLeave}
+                >
                     <input type="checkbox" id="handleOutliers" checked={handleOutliersFlag} onChange={() => setHandleOutliersFlag(!handleOutliersFlag)} />
                     <label htmlFor="handleOutliers">Handle Outliers</label>
                 </div>
@@ -1211,11 +1502,13 @@ return (
                             onChange={(e) => setOutlierThreshold(parseFloat(e.target.value))}
                         />
                     </div>
-                <button onClick={applyDataTuning} className="refresh-button" style={isSpinning ? { transform: 'rotate(360deg)' } : {}} disabled={dataReloaded}>
+                {/* Commenting ou the refresh button to try auto-refresh on option toggle */}
+                {/* <button onClick={applyDataTuning} className="refresh-button" style={isSpinning ? { transform: 'rotate(360deg)' } : {}} disabled={dataReloaded}>
                     <FaSyncAlt color="#007bff" size="1em" />
-                </button>
+                </button> */}
             </div>
         </div>
+          {renderTooltip()} {/* ADD THIS LINE */}
         <div className="status-message-container">
             <ul style={{ listStyleType: "none", padding: "0px" }}>
                 <h2 className="status-message-header">Data Status</h2>
@@ -1223,10 +1516,12 @@ return (
                     <li
                         key={index}
                         className="status-message"
-                        style={{ display: message.completed ? 'block' : 'none' }}
+                        style={{ display: message.completed ? 'flex' : 'none' }}
                     >
                         ✅ {message.label} Cleaning Complete!
-                        {message.message && <p className='status-message-detail'>{message.message}</p>}
+                         {message.message && (
+                            <p className='status-message-detail'>  —>  {message.message}</p>
+                        )}
                     </li>
                 ))}
                 <div className="performance-stats-container">
@@ -1254,10 +1549,13 @@ return (
             </ul>
         </div>
         <DataDisplay data={data} showPopup={showPopup} setShowPopup={setShowPopup} />
-        {renderMeanPredictionCard()}
-        {renderLinearRegressionCard()}
-        {renderKNNPredictionCard()}
-        {renderCorrelationCard()}
+          <div className="prediction-cards-grid">
+          {renderMeanPredictionCard()}
+          {renderLinearRegressionCard()}
+          {renderKNNPredictionCard()}
+          {renderCorrelationCard()}
+        </div>
+        {renderHeatmap()}
         <div>
             <footer className='footer'>
                 <FeedbackForm />

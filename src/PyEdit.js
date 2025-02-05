@@ -11,6 +11,15 @@ const PyEdit = () => {
   const [output, setOutput] = useState('');  
   const [data, setData] = useState([]);  
 
+  //Flask test
+  // const [message, setMessage] = useState("");
+  // useEffect(() => {
+  //   fetch('http://localhost:5000/api/hello') // Flask endpoint
+  //       .then(res => res.json())
+  //       .then(data => setMessage(data.message));
+  // }, []);
+
+
   useEffect(() => {
     Sk.configure({
       output: (text) => {
@@ -88,6 +97,7 @@ const PyEdit = () => {
           </p>
             Note: This editor doesn't yet support python imports.
             <p></p>
+            {/* <p>{message}</p> */}
         </div>
 
         <div className="python-executor">

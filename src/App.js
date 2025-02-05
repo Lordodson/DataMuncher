@@ -8,6 +8,7 @@ import Advanced from "./Advanced";
 import PyEdit from "./PyEdit";
 import EducationalResource from "./EducationResource";
 import FeedbackForm from "./FeedbackForm"; // Import FeedbackForm
+import PyAdvanced from "./PyAdvanced";
 import './App.css';
 
 function Navbar({ theme, toggleTheme }) {
@@ -50,6 +51,9 @@ function Navbar({ theme, toggleTheme }) {
         <li className="navbar-item">
           <Link to="/EducationalResource" className="navbar-link" onClick={handleLinkClick}>Educational Resource</Link>
         </li>
+        {/* <li>
+          <Link to="/PyAdvanced" className="navbar-link" onClick={handleLinkClick}>Python Advanced</Link>
+        </li> */}
         {/* <li className="navbar-item theme-toggle-item">
           <button className="theme-toggle-button" onClick={toggleTheme}>
             Switch to {theme === 'light' ? 'dark' : 'light'} mode
@@ -92,6 +96,7 @@ export default function App() {
           <Route path="/Advanced" element={<Advanced />} />
           <Route path="/PyEdit" element={<PyEdit />} />
           <Route path="/EducationalResource" element={<EducationalResource />} />
+          <Route path="/PyAdvanced" element={<PyAdvanced/>} />
           <Route path="/feedback" element={<FeedbackForm theme={theme} />} /> {/* Pass theme prop */}
         </Routes>
       </div>
