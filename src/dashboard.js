@@ -102,17 +102,15 @@ const Dashboard = () => {
             Papa.parse(file, {
                 complete: (result) => {
                     const endTime = performance.now();
-                   
+
                     setCsvUploadTime(Math.max((endTime - startTime) / 1000, Number.EPSILON))
                     const parsedData = result.data;
                     console.log("Parsed data:", parsedData);
                     setData(parsedData);
 
-                   
                     const sampled = sampleData(parsedData);
                     setSampledData(sampled);
 
-                   
                     const initialDisplayData = parsedData.slice(0, itemsPerPage);
                     setDisplayData(initialDisplayData);
                     setFileUploaded(true);
@@ -120,14 +118,14 @@ const Dashboard = () => {
                     setMissingValueHandlingComplete(false);
                     setNumericColumnIdentificationComplete(false);
                     setExtractionOfNumericDataComplete(false);
-                   
+
                     setDuplicateCount(0);
                     setMissingValueCount(0);
                     setNumericColumnCount(0);
                     setExtractedValueCount(0);
                     setGraphErrorMessage("");
                     setSummaryErrorMessage("");
-                   
+
                     if (parsedData && parsedData.length > 0) {
                         const headers = Object.keys(parsedData[0]);
 
@@ -142,7 +140,9 @@ const Dashboard = () => {
                             cols: headers.length > 1 ? headers.slice(1, 2) : [],
                             vals: headers.length > 2 ? headers.slice(2, 3) : [],
                         }));
-                       
+
+                        setPivotState({});
+
                         setChartSelections((prev) => ({
                             bar: { xAxis: headers[0] || "" },
                             line: { xAxis: headers[0] || "" },
@@ -168,9 +168,9 @@ const Dashboard = () => {
         }
     }, [page, data, itemsPerPage]);
 
-   
-   
-   
+
+
+
     useEffect(() => {
         if (sampledData) {
             setIsSpinning(true);
@@ -183,14 +183,14 @@ const Dashboard = () => {
 
     const generateSummary = (data) => {
         if (data.length === 0) return;
-    
+
         let startTime;
         let endTime;
         let numDuplicatesRemoved = 0;
         let numMissingValuesHandled = 0;
         let numNumericColumns = 0;
         let numExtractedValues = 0;
-    
+
         let uniqueData = data;
         startTime = performance.now();
         if (removeDuplicates) {
@@ -206,7 +206,7 @@ const Dashboard = () => {
         endTime = performance.now();
         setProcessingTimes(prev => ({ ...prev, duplicateRemoval: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
         setDuplicateCount(numDuplicatesRemoved);
-    
+
         let cleanedData = uniqueData;
         startTime = performance.now();
         if (handleMissingValues) {
@@ -220,7 +220,7 @@ const Dashboard = () => {
                     else {
                         cleanedRow[key] = row[key];
                     }
-    
+
                 }
                 return cleanedRow;
             });
@@ -233,11 +233,11 @@ const Dashboard = () => {
         endTime = performance.now();
         setProcessingTimes(prev => ({ ...prev, missingValueHandling: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
         setMissingValueCount(numMissingValuesHandled);
-    
+
         const standardizedData = cleanedData;
         console.log("Data formats standardized");
         let numericColumns = [];
-    
+
         startTime = performance.now();
         if (identifyNumericColumns) {
             const columns = Object.keys(standardizedData[0]);
@@ -251,16 +251,16 @@ const Dashboard = () => {
             console.log("Numeric columns identified:", numericColumns);
             console.log("Setting numericColumnIdentificationComplete to true");
             setNumericColumnIdentificationComplete(true);
-    
+
         } else {
             setNumericColumnIdentificationComplete(false);
         }
         endTime = performance.now();
         setProcessingTimes(prev => ({ ...prev, numericColumnIdentification: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
         setNumericColumnCount(numNumericColumns);
-    
+
         let allNumericData = [];
-    
+
         startTime = performance.now();
         if (extractNumericData) {
             standardizedData.forEach(row => {
@@ -279,7 +279,7 @@ const Dashboard = () => {
         endTime = performance.now();
         setProcessingTimes(prev => ({ ...prev, extractionOfNumericData: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
         setExtractedValueCount(numExtractedValues);
-    
+
         if (!extractNumericData || !identifyNumericColumns) {
             setSummaryErrorMessage("Data summary generation is not possible without the 'Identify Numeric Columns' and 'Extract Numeric Data' options turned on");
             setSummary(null);
@@ -287,46 +287,46 @@ const Dashboard = () => {
         } else {
             setSummaryErrorMessage("");
         }
-    
+
         startTime = performance.now();
-    
+
         const calculateMedian = (arr) => {
             const sortedArr = arr.slice().sort((a, b) => a - b);
             const mid = Math.floor(sortedArr.length / 2);
             return sortedArr.length % 2 !== 0 ? sortedArr[mid] : (sortedArr[mid - 1] + sortedArr[mid]) / 2;
         };
-    
+
         const calculateMode = (arr) => {
             const frequency = {};
             arr.forEach(value => frequency[value] = (frequency[value] || 0) + 1);
             const maxFreq = Math.max(...Object.values(frequency));
             return Object.keys(frequency).filter(key => frequency[key] === maxFreq);
         };
-    
+
         const calculateStandardDeviation = (arr) => {
             const mean = _.mean(arr);
             const squaredDiffs = arr.map(value => Math.pow(value - mean, 2));
             return Math.sqrt(_.mean(squaredDiffs));
         };
-    
+
         const calculateVariance = (arr) => {
             const mean = _.mean(arr);
             const squaredDiffs = arr.map(value => Math.pow(value - mean, 2));
             return _.mean(squaredDiffs);
         };
-    
-    
+
+
         const calculateRange = (arr) => {
             return _.max(arr) - _.min(arr);
         };
-    
+
         const calculateIQR = (arr) => {
             const sortedArr = arr.slice().sort((a, b) => a - b);
             const q1 = sortedArr[Math.floor(sortedArr.length / 4)];
             const q3 = sortedArr[Math.floor(sortedArr.length * 3 / 4)];
             return q3 - q1;
         };
-    
+
         const calculateSkewness = (arr) => {
             const mean = _.mean(arr);
             const n = arr.length;
@@ -334,7 +334,7 @@ const Dashboard = () => {
             const m2 = Math.pow(_.mean(arr.map(value => Math.pow(value - mean, 2))), 1.5);
             return (n * m3) / ((n - 1) * (n - 2) * m2);
         };
-    
+
         const calculateKurtosis = (arr) => {
             const mean = _.mean(arr);
             const n = arr.length;
@@ -342,7 +342,7 @@ const Dashboard = () => {
             const m2 = Math.pow(_.mean(arr.map(value => Math.pow(value - mean, 2))), 2);
             return (n * (n + 1) * m4) / ((n - 1) * (n - 2) * (n - 3) * m2) - (3 * Math.pow(n - 1, 2)) / ((n - 2) * (n - 3));
         };
-    
+
         const summary = {
             mean: allNumericData.length ? _.mean(allNumericData).toFixed(4) : 'N/A',
             median: allNumericData.length ? calculateMedian(allNumericData).toFixed(4) : 'N/A',
@@ -356,19 +356,19 @@ const Dashboard = () => {
             min: allNumericData.length ? _.min(allNumericData).toFixed(4) : 'N/A',
             max: allNumericData.length ? _.max(allNumericData).toFixed(4) : 'N/A',
         };
-    
+
         const columns = Object.keys(standardizedData[0]);
         const rowCount = standardizedData.length;
-    
+
         const overview = {
             rowCount,
             columnCount: columns.length,
             summary,
         };
-    
+
         endTime = performance.now();
         setSummaryGenerationTime(Math.max((endTime - startTime) / 1000, Number.EPSILON));
-    
+
         setSummary(overview);
         console.log("Summary generated:", overview);
     };
@@ -376,7 +376,7 @@ const Dashboard = () => {
     const generateGraphs = (data) => {
         let startTime = performance.now();
         if (data && data.length === 0) return;
-    
+
         if (!extractNumericData || !identifyNumericColumns) {
             setGraphErrorMessage("Graph generation is not possible without the 'Identify Numeric Columns' and 'Extract Numeric Data' options turned on");
             setGraphData({});
@@ -384,20 +384,20 @@ const Dashboard = () => {
         } else {
             setGraphErrorMessage("");
         }
-    
+
         const generateChartData = (chartType) => {
             if (!data) return null;
             const columns = Object.keys(data[0]);
-    
+
             const xAxisColumn = chartSelections[chartType].xAxis || columns[0];
             const yAxisColumn = chartSelections[chartType].yAxis || columns[1];
-    
-    
+
+
             const labels = data.map((row, index) => `Row ${index + 1}`);
             const valuesX = data.map(row => Number(row[xAxisColumn]));
             const valuesY = data.map(row => Number(row[yAxisColumn]));
-    
-    
+
+
             switch (chartType) {
                 case "bar":
                     return {
@@ -467,10 +467,10 @@ const Dashboard = () => {
                     return null;
             }
         }
-    
+
         let endTime = performance.now();
         setGraphGenerationTime(Math.max((endTime - startTime) / 1000, Number.EPSILON));
-    
+
         setGraphData({
             bar: generateChartData("bar"),
             line: generateChartData("line"),
@@ -502,7 +502,7 @@ const Dashboard = () => {
         </Document>
     );
 
-   
+
     const handlePivotChange = (state) => {
         setPivotState(state);
         setPivotOptions(prevState => ({

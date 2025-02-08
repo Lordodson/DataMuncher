@@ -1,4 +1,3 @@
-/* General Styles */
 .App {
   text-align: center;
 }
@@ -408,9 +407,7 @@ p {
   max-width: 600px;
   background-color: #f9f9f9;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow-wrap: break-word; /* ADD THIS LINE */
-  word-break: break-word;    /* ADD THIS LINE */
-}
+  overflow-wrap: break-word;   word-break: break-word;    }
 
 .predictions-header {
   font-size: 1.5em;
@@ -428,9 +425,7 @@ p {
 .analysis-text {
   font-size: 1em;
   color: #555;
-   overflow-wrap: break-word;  /* ADD THIS LINE */
-  word-break: break-word;     /* ADD THIS LINE */
-}
+   overflow-wrap: break-word;    word-break: break-word;     }
 
 
 .analysis-text strong {
@@ -471,18 +466,52 @@ p {
 }
 
 .popup-content {
+  position: relative;
+  padding: 20px;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.popup-container {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); 
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; 
+}
+
+.popup-content .close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #555; 
+}
+
+.popup-content .close-button:hover {
+  color: #000;
 }
 
 .close-btn {
-  position: absolute;
-  align-self: flex-end;
+  position: sticky;
+  top: 10px;
+  left: 1000px;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 20px;
   cursor: pointer;
+  z-index: 1;
 }
 
 .data-table {
@@ -602,8 +631,7 @@ p {
   margin-bottom: 20px;
   border-radius: 5px;
   background-color: #f9f9f9;
-  text-align: left; /* Add this line */
-}
+  text-align: left; }
 
 .status-message-header {
   font-size: 1.2em;
@@ -614,13 +642,10 @@ p {
 .status-message {
   margin-bottom: 5px;
   color: #555;
-  display: flex;        /* ADD THIS LINE */
-  align-items: center; /* ADD THIS LINE */
-}
+  display: flex;          align-items: center; }
 
 .status-message-detail {
-  margin-left: 10px;  /* Adjusted to put space to the right */
-  font-size: 0.8em;
+  margin-left: 10px;    font-size: 0.8em;
   font-style: italic;
   white-space: nowrap;
   overflow: hidden;
@@ -721,10 +746,8 @@ margin-top: 10px;
 padding-left: 10px;
 }
 
-.prediction-cards-grid { /* ADD THIS BLOCK */
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjust minmax as needed */
-  gap: 20px;
+.prediction-cards-grid {   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));   gap: 20px;
   padding: 20px;
   margin: 50px;
 }
@@ -736,16 +759,13 @@ padding-left: 10px;
   border-radius: 4px;
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 1001; /* Ensure it's above other elements */
-  max-width: 300px; /* Adjust as needed */
-  pointer-events: none;
+  z-index: 1001;   max-width: 300px;   pointer-events: none;
   font-size: 0.9em;
 }
 
 .heatmap-container {
   width: 100%;
-  overflow-x: auto; /* Adds horizontal scroll if chart is too wide */
-}
+  overflow-x: auto; }
 
 .d3-tooltip {
   font-family: sans-serif;
@@ -753,11 +773,8 @@ pointer-events: none;
 }
 
 .heatmap-container {
-  width: 80%; /* ADD THIS */
-  overflow-x: auto;
-  margin: 20px auto;  /* ADD THIS TO CENTER THE HEATMAP */
-  display: block; /* ADD THIS LINE*/
-}
+  width: 80%;   overflow-x: auto;
+  margin: 20px auto;    display: block; }
 .d3-tooltip {
   font-family: sans-serif;
   pointer-events: none;

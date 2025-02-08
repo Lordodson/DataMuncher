@@ -1223,6 +1223,81 @@ const EducationalResource = () => {
           </div>
         </div>
       </div>
+        <h2>References</h2>
+
+        <h3>Introduction to Data Science</h3>
+        <ul>
+            <li>Provost, F., & Fawcett, T. (2013). <i>Data Science for Business: What You Need to Know About Data Mining and Data-Analytic Thinking</i>. O'Reilly Media. (This is a foundational text covering the principles of data science and its applications in business)</li>
+            <li>Domingos, P. (2015). <i>The Master Algorithm: How the Quest for the Ultimate Learning Machine Will Remake Our World</i>. Basic Books. (This book provides a broad overview of machine learning algorithms.)</li>
+        </ul>
+
+        <h3>Healthcare</h3>
+        <ul>
+            <li>Jiang, F., Jiang, Y., Zhi, H., Dong, Y., Li, H., Ma, S., ... & Wang, Y. (2017). Artificial intelligence in healthcare: past, present and future. <i>Stroke and vascular neurology</i>, <i>2</i>(4), 230-243. <a href="https://svn.bmj.com/content/2/4/230" target="_blank">https://svn.bmj.com/content/2/4/230</a></li>
+            <li>Esteva, A., Kuprel, B., Novoa, R. A., Ko, J., Swani, S. M., Blau, H. M., ... & Threlfall, C. J. (2017). Dermatologist-level classification of skin cancer with deep neural networks. <i>Nature</i>, <i>542</i>(7639), 115-118. <a href="https://www.nature.com/articles/nature21056" target="_blank">https://www.nature.com/articles/nature21056</a></li>
+        </ul>
+
+        <h3>Finance</h3>
+        <ul>
+            <li>Bolton, R. J., & Hand, D. J. (2002). Statistical fraud detection: a review. <i>Statistical science</i>, 235-255. <a href="https://projecteuclid.org/journals/statistical-science/volume-17/issue-3/Statistical-Fraud-Detection-A-Review/10.1214/ss/1042727940.full" target="_blank">https://projecteuclid.org/journals/statistical-science/volume-17/issue-3/Statistical-Fraud-Detection-A-Review/10.1214/ss/1042727940.full</a></li>
+        </ul>
+
+        <h3>E-commerce</h3>
+        <ul>
+            <li>Ricci, F., Rokach, L., & Shapira, B. (2011). <i>Introduction to Recommender Systems Handbook</i>. Springer. (A comprehensive overview of recommender systems)</li>
+        </ul>
+
+        <h3>Data Types and Sources</h3>
+        <ul>
+            <li>Date, C. J. (2000). <i>An Introduction to Database Systems</i>. Addison-Wesley.</li>
+            <li>Fielding, R. T. (2000). Architectural Styles and the Design of Network-based Software Architectures. Doctoral Dissertation, University of California, Irvine.<a href="https://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm" target="_blank">https://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm</a></li>
+            <li>Powers, M. J. (2010). <i>Practical Guide to Web Scraping</i>. Apress.</li>
+        </ul>
+
+        <h3>Python Libraries</h3>
+        <ul>
+            <li>Van Rossum, G., & Drake, F. L. (2009). <i>Python 3 Reference Manual</i>. Scotts Valley, CA: CreateSpace. (Official Python Documentation). <a href="https://docs.python.org/3/" target="_blank">https://docs.python.org/3/</a></li>
+            <li>The Pandas Development Team. (2020). pandas-dev/pandas: Pandas. Zenodo. (Pandas Documentation). <a href="https://pandas.pydata.org/docs/" target="_blank">https://pandas.pydata.org/docs/</a></li>
+            <li>Oliphant, T. E. (2006). <i>A guide to NumPy</i>. Trelgol Publishing. (NumPy Documentation). <a href="https://numpy.org/doc/stable/" target="_blank">https://numpy.org/doc/stable/</a></li>
+            <li>Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., ... & Vanderplas, J. (2011). Scikit-learn: Machine learning in Python. <i>Journal of machine learning research</i>, <i>12</i>(Oct), 2825-2830. (Scikit-learn Documentation). <a href="https://scikit-learn.org/stable/" target="_blank">https://scikit-learn.org/stable/</a></li>
+            <li>Hunter, J. D. (2007). Matplotlib: A 2D graphics environment. <i>Computing in Science & Engineering</i>, <i>9</i>(3), 90-95. (Matplotlib Documentation). <a href="https://matplotlib.org/stable/index.html" target="_blank">https://matplotlib.org/stable/index.html</a></li>
+            <li>Waskom, M. L. (2021). Seaborn: statistical data visualization. <i>Journal of Open Source Software</i>, <i>6</i>(60), 3021. (Seaborn Documentation). <a href="https://seaborn.pydata.org/" target="_blank">https://seaborn.pydata.org/</a></li>
+            <li>Plotly Technologies Inc. (2015). <i>Plotly's Python graphing library</i>. Montreal, QC.<a href="https://plotly.com/python/" target="_blank">https://plotly.com/python/</a></li>
+        </ul>
+
+        <h3>Machine Learning Algorithms and Concepts</h3>
+        <ul>
+            <li>Bishop, C. M. (2006). <i>Pattern Recognition and Machine Learning</i>. Springer.</li>
+            <li>James, G., Witten, D., Hastie, T., & Tibshirani, R. (2013). <i>An Introduction to Statistical Learning with Applications in R</i>. Springer. <a href="http://faculty.marshall.usc.edu/gareth-james/ISL/ISLR%20Seventh%20Printing.pdf" target="_blank">http://faculty.marshall.usc.edu/gareth-james/ISL/ISLR%20Seventh%20Printing.pdf</a> </li>
+        </ul>
+
+        <h3>Model Evaluation and Validation</h3>
+        <ul>
+            <li>Kohavi, R. (1995). A study of cross-validation and bootstrap for accuracy estimation and model selection. <i>International joint conference on artificial intelligence</i>, <i>14</i>(2). <a href="https://www.ijcai.org/Proceedings/95-2/Papers/089.pdf" target="_blank">https://www.ijcai.org/Proceedings/95-2/Papers/089.pdf</a></li>
+        </ul>
+
+        <h3>Ethics in Data Science</h3>
+        <ul>
+            <li>Goodman, B., & Flaxman, S. (2017). European Union regulations on algorithmic decision-making and a “right to explanation”. <i>AI Magazine</i>, <i>38</i>(3), 50-57. <a href="https://ojs.aaai.org/index.php/aimag/article/view/2741" target="_blank">https://ojs.aaai.org/index.php/aimag/article/view/2741</a> (Discusses GDPR and algorithmic decision-making).</li>
+            <li>O'Neil, C. (2016). <i>Weapons of Math Destruction: How Big Data Increases Inequality and Threatens Democracy</i>. Crown.</li>
+            <li>Mehrabi, N., Morstatter, F., Saxena, N., Lerman, K., & Galstyan, A. (2021). A survey on bias and fairness in machine learning. <i>ACM Computing Surveys (CSUR)</i>, <i>54</i>(6), 1-35. <a href="https://dl.acm.org/doi/abs/10.1145/3457607" target="_blank">https://dl.acm.org/doi/abs/10.1145/3457607</a></li>
+        </ul>
+
+        <h3>Big Data Technologies</h3>
+        <ul>
+            <li>White, T. (2012). <i>Hadoop: The definitive guide</i>. " O'Reilly Media, Inc.".</li>
+        </ul>
+
+        <h3>Community and Networking</h3>
+        <ul>
+            <li>Kaggle: <a href="https://www.kaggle.com/" target="_blank">https://www.kaggle.com/</a></li>
+            <li>Reddit (r/datascience): <a href="https://www.reddit.com/r/datascience/" target="_blank">https://www.reddit.com/r/datascience/</a></li>
+            <li>Reddit (r/MachineLearning): <a href="https://www.reddit.com/r/MachineLearning/" target="_blank">https://www.reddit.com/r/MachineLearning/</a></li>
+            <li>Stack Overflow: <a href="https://stackoverflow.com/" target="_blank">https://stackoverflow.com/</a></li>
+            <li>Meetup: <a href="https://www.meetup.com/" target="_blank">https://www.meetup.com/</a></li>
+            <li>GitHub: <a href="https://github.com/" target="_blank">https://github.com/</a></li>
+            <li>Open Data Science Conference (ODSC): <a href="https://odsc.com/" target="_blank">https://odsc.com/</a></li>
+        </ul>
       <footer className='footer'>
         <FeedbackForm />
       </footer>

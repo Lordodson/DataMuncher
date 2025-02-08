@@ -67,8 +67,12 @@ const Advanced = () => {
     const [optionsOpen, setOptionsOpen] = useState(true);
     const toggleOptions = () => setOptionsOpen(!optionsOpen);
     const [tooltip, setTooltip] = useState(null);
+    const [heatmapData, setHeatmapData] = useState(null); 
+    const heatmapRef = useRef(null); 
+    const [totalProcessingTime, setTotalProcessingTime] = useState(null); 
+    const [dataStartTime, setDataStartTime] = useState(null); 
 
-   const handleTooltipEnter = (content, e) => {
+    const handleTooltipEnter = (content, e) => {
         const rect = e.target.getBoundingClientRect();
         const xPos = rect.left + window.scrollX;
         const yPos = rect.bottom + window.scrollY;
@@ -355,7 +359,7 @@ const Advanced = () => {
                                     if (typeof value === 'number' && !isNaN(value)) {
                                         if (value < lowerBound || value > upperBound) {
                                             outlierCount++;
-                                            console.log(`    Outlier detected: Value: ${value}, Replaced with mean: ${meanOfInliers}`);
+                                            
                                             return { ...row, [col]: meanOfInliers };
                                         }
                                     }
@@ -371,9 +375,9 @@ const Advanced = () => {
                             const value = row[col];
                             if(typeof value === 'number' && !isNaN(value)) {
                               if (meanLabel !== null && (value < (meanLabel/10) || value > (meanLabel*10))){
-                                      outlierCount++;
-                                    console.log(`    Outlier detected in label column: Value: ${value}, Replaced with mean: ${meanLabel}`);
-                                     return { ...row, [col]: meanLabel };
+                                    outlierCount++;
+                                    
+                                    return { ...row, [col]: meanLabel };
                                 }
                             }
                              return row
@@ -414,17 +418,16 @@ const Advanced = () => {
             handleMissing: { ...prevState.handleMissing, completed: false, message: null },
             handleOutliers: { ...prevState.handleOutliers, completed: false, message: null },
         }));
-        
-       
+    
         let tunedData = [...originalData];
-
-         const { data: processedData, messages } = preprocessDataWithMessages(tunedData, handleCommasAsDecimalFlag);
-         const { featureColumns, labelColumn } = selectColumns(processedData);
-         setFeatureColumns(featureColumns);
-         setLabelColumn(labelColumn);
-        
+    
+        const { data: processedData, messages } = preprocessDataWithMessages(tunedData, handleCommasAsDecimalFlag);
+        const { featureColumns, labelColumn } = selectColumns(processedData);
+        setFeatureColumns(featureColumns);
+        setLabelColumn(labelColumn);
+    
         const validationIssues = validateData(processedData, featureColumns, labelColumn);
-
+    
         if (validationIssues.length > 0) {
             console.error("Validation Issues:", validationIssues);
             alert("Validation Errors:\n" + validationIssues.join("\n"));
@@ -432,41 +435,42 @@ const Advanced = () => {
             setTimeout(() => setIsSpinning(false), 300);
             setLoadingMessage('');
         } else {
-           console.log("Features:", featureColumns);
-           console.log("Label:", labelColumn);
-           console.log("Cleaned and Tuned Data:", processedData);
-          
+            console.log("Features:", featureColumns);
+            console.log("Label:", labelColumn);
+            console.log("Cleaned and Tuned Data:", processedData);
+    
             setData(processedData);
-           const displayedData = processedData.slice(0, itemsPerPage);
+            const displayedData = processedData.slice(0, itemsPerPage);
             setDisplayData(displayedData);
-            let meanStartTime = performance.now()
-           createMeanPrediction(processedData);
-            let meanEndTime = performance.now()
+    
+            let meanStartTime = performance.now();
+            createMeanPrediction(processedData); 
+            let meanEndTime = performance.now();
             let linearStartTime = performance.now();
-            createLinearRegression(processedData, featureColumns, labelColumn);
-           let linearEndTime = performance.now();
+            createLinearRegression(processedData, featureColumns, labelColumn); 
+            let linearEndTime = performance.now();
             let knnStartTime = performance.now();
-            createKNNModel(processedData, featureColumns, labelColumn);
-            let knnEndTime = performance.now()
-
-           setModelPredictionTimes(prev => ({
+            createKNNModel(processedData, featureColumns, labelColumn); 
+            let knnEndTime = performance.now();
+    
+            setModelPredictionTimes(prev => ({
                 ...prev,
-               mean: (meanEndTime - meanStartTime) / 1000,
-               linearRegression: (linearEndTime - linearStartTime) / 1000,
+                mean: (meanEndTime - meanStartTime) / 1000,
+                linearRegression: (linearEndTime - linearStartTime) / 1000,
                 knn: (knnEndTime - knnStartTime) / 1000
             }));
-
+    
             setShowPopup(false);
-             setIsLoading(false);
-             setTimeout(() => setIsSpinning(false), 300);
-             setLoadingMessage('');
-             setStatusMessages(prevState => ({
+            setIsLoading(false);
+            setTimeout(() => setIsLoading(false), 300);
+            setLoadingMessage('');
+            setStatusMessages(prevState => ({
                 ...prevState,
-                 trimColumns: { ...prevState.trimColumns, completed: trimColumnNamesFlag, message: messages.trimMessage },
+                trimColumns: { ...prevState.trimColumns, completed: trimColumnNamesFlag, message: messages.trimMessage },
                 handleCommas: { ...prevState.handleCommas, completed: handleCommasAsDecimalFlag, message: handleCommasAsDecimalFlag ? 'Commas treated as decimals.' : null },
-               handleCategorical: { ...prevState.handleCategorical, completed: handleCategoricalDataFlag, message: messages.categoricalMessage },
-                 handleMissing: { ...prevState.handleMissing, completed: handleMissingValuesFlag, message: messages.missingMessage },
-                 handleOutliers: { ...prevState.handleOutliers, completed: handleOutliersFlag, message: messages.outlierMessage },
+                handleCategorical: { ...prevState.handleCategorical, completed: handleCategoricalDataFlag, message: messages.categoricalMessage },
+                handleMissing: { ...prevState.handleMissing, completed: handleMissingValuesFlag, message: messages.missingMessage },
+                handleOutliers: { ...prevState.handleOutliers, completed: handleOutliersFlag, message: messages.outlierMessage },
             }));
         }
     };
@@ -477,8 +481,10 @@ const Advanced = () => {
         if (file && file.name.endsWith('.csv')) {
             setIsLoading(true);
             setLoadingMessage("Loading and processing data...");
-    
+
             const startTime = performance.now();
+            setDataStartTime(startTime); 
+            
             Papa.parse(file, {
                 complete: (result) => {
                     const endTime = performance.now();
@@ -487,9 +493,9 @@ const Advanced = () => {
                     console.log("Parsed Data Length:", rawData.length);
                     setRawDataFromUpload(rawData);
 
-                  console.log("Transformed Data Length:", rawData.length);
+                    console.log("Transformed Data Length:", rawData.length);
                     setOriginalData(rawData);
-    
+                    setHeatmapData(null);
                     const { data: cleanedData, messages } = preprocessDataWithMessages(rawData, true);
                     console.log("Cleaned Data Length:", cleanedData.length);
     
@@ -509,22 +515,7 @@ const Advanced = () => {
                         console.log("Cleaned and Validated Data Length:", cleanedData.length);
                         setData(cleanedData);
                         setDisplayData(cleanedData.slice(0, itemsPerPage));
-                        let meanStartTime = performance.now();
-                        createMeanPrediction(cleanedData);
-                        let meanEndTime = performance.now();
-                        let linearStartTime = performance.now();
-                        createLinearRegression(cleanedData, featureColumns, labelColumn);
-                        let linearEndTime = performance.now();
-                        let knnStartTime = performance.now();
-                        createKNNModel(cleanedData, featureColumns, labelColumn);
-                        let knnEndTime = performance.now();
-                        setModelPredictionTimes(prev => ({
-                            ...prev,
-                            mean: (meanEndTime - meanStartTime) / 1000,
-                            linearRegression: (linearEndTime - linearStartTime) / 1000,
-                            knn: (knnEndTime - knnStartTime) / 1000
-                        }));
-    
+
                         setShowPopup(false);
                         setIsLoading(false);
                         setLoadingMessage('');
@@ -532,7 +523,7 @@ const Advanced = () => {
                             ...prevState,
                             fileUpload: { ...prevState.fileUpload, completed: true },
                             trimColumns: { ...prevState.trimColumns, completed: trimColumnNamesFlag, message: messages.trimMessage },
-                            handleCommas: { ...prevState.handleCommas, completed: handleCommasAsDecimalFlag, message: handleCommasAsDecimalFlag ? 'Commas treated as decimals.' : null },
+                            handleCommas: { ...prevState.handleCommas, completed: handleCommasAsDecimalFlag, message: messages.handleCommasAsDecimalFlag ? 'Commas treated as decimals.' : null },
                             handleCategorical: { ...prevState.handleCategorical, completed: handleCategoricalDataFlag, message: messages.categoricalMessage },
                             handleMissing: { ...prevState.handleMissing, completed: handleMissingValuesFlag, message: messages.missingMessage },
                             handleOutliers: { ...prevState.handleOutliers, completed: handleOutliersFlag, message: messages.outlierMessage },
@@ -570,7 +561,7 @@ const Advanced = () => {
               processedData = outlierResult.data;
           } else {
                 const { numericColumns } = detectColumns(processedData);
-               outlierResult = handleOutliers(processedData, numericColumns, outlierThreshold, deepCopy(originalData), handleOutliersFlag, labelColumn);
+               outlierResult = handleOutliers(processedData, numericColumns, outlierThreshold,deepCopy(originalData), handleOutliersFlag, labelColumn);
                processedData = outlierResult.data;
           }
         console.log("Data after preprocessDataWithMessages:", processedData) 
@@ -607,10 +598,28 @@ const Advanced = () => {
     }, [page, data]);
 
     useEffect(() => {
-        if (displayData.length > 0 && labelColumn) {
-            createMeanPrediction(displayData);
-            createLinearRegression(displayData, featureColumns, labelColumn);
-            createKNNModel(displayData, featureColumns, labelColumn);
+        if (displayData.length > 0 && labelColumn && featureColumns.length > 0) {
+            if(dataStartTime) {
+                let meanStartTime = performance.now();
+                createMeanPrediction(displayData);
+                let meanEndTime = performance.now();
+                let linearStartTime = performance.now();
+                createLinearRegression(displayData, featureColumns, labelColumn);
+                let linearEndTime = performance.now();
+                let knnStartTime = performance.now();
+                createKNNModel(displayData, featureColumns, labelColumn);
+                let knnEndTime = performance.now();
+
+                setModelPredictionTimes(prev => ({
+                    ...prev,
+                    mean: (meanEndTime - meanStartTime) / 1000,
+                    linearRegression: (linearEndTime - linearStartTime) / 1000,
+                    knn: (knnEndTime - knnStartTime) / 1000
+                }));
+                const totalTime = performance.now() - dataStartTime;
+                setTotalProcessingTime(totalTime/1000); 
+                setDataStartTime(null);
+            }
         }
     }, [displayData, labelColumn, featureColumns]);
     
@@ -1174,64 +1183,83 @@ const Advanced = () => {
     );
   };
 
+    
+    const generateHeatmapData = () => {
+        if (!data || !featureColumns || featureColumns.length === 0) return null;
+    
+        const numericData = data.map(row => featureColumns.map(col => parseFloat(row[col])));
+        const corrMatrix = featureColumns.map((col1, i) =>
+            featureColumns.map((col2, j) => {
+                if (i === j) { return 1 }
+                return ss.sampleCorrelation(numericData.map(row => row[i]), numericData.map(row => row[j]))
+            })
+        );
+        setHeatmapData({ corrMatrix, labels: featureColumns });
+    
+        
+        setTimeout(() => {
+            if (heatmapRef.current) {
+                console.log("Heatmap Ref:", heatmapRef.current); 
+                heatmapRef.current.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              console.log("Heatmap Ref is null or undefined.");
+            }
+        }, 0); 
+    };
+
   const renderHeatmap = () => {
-    if (!data || !featureColumns || featureColumns.length === 0) return null;
-     const numericData = data.map(row => featureColumns.map(col => parseFloat(row[col])));
-    const corrMatrix = featureColumns.map((col1, i) =>
-       featureColumns.map((col2, j) => {
-            if (i === j) { return 1}
-            return ss.sampleCorrelation(numericData.map(row => row[i]),numericData.map(row => row[j]))
-        })
-    );
-    const labels = featureColumns;
-    return (
-        <div className="heatmap-container">
-            <h2 className="status-message-header">Feature Correlation Matrix</h2>
-            <ChartComponent
+        if (!heatmapData) return null;
+
+        const { corrMatrix, labels } = heatmapData;
+
+        return (
+            <div className="heatmap-container" ref={heatmapRef}>
+                <h2 className="status-message-header">Feature Correlation Matrix</h2>
+                <ChartComponent
                     type="heatmap"
-                        data={{
+                    data={{
                         labels,
                         datasets: [{
                             data: corrMatrix.map((row, i) => row.map((val, j) => ({
                                 x: labels[j],
                                 y: labels[i],
                                 value: val
-                                }))).flat()
+                            }))).flat()
                         }]
                     }}
-                        options={{
-                            scales: {
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Features'
-                                    }
-                            },
-                                y: {
-                                    title: {
-                                        display: true,
-                                    text: 'Features'
-                                    }
-                            }
-                            },
-                            plugins: {
+                    options={{
+                        scales: {
+                            x: {
                                 title: {
-                                    display: false,
+                                    display: true,
+                                    text: 'Features'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Features'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: false,
                                 text: 'Feature Correlation Matrix'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                    label: function(context) {
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
                                         return `${context.parsed.y} corr: ${context.parsed.value.toFixed(2)}`
                                     }
                                 }
                             }
-                            }
-                        }}
-                    />
-        </div>
-    )
-};
+                        }
+                    }}
+                />
+            </div>
+        )
+    };
 
   const renderMeanPredictionCard = () => {
         if (meanPrediction === null) return null;
@@ -1545,19 +1573,65 @@ return (
                             </li>
                         );
                     })}
+                    {totalProcessingTime !== null && (
+                        <li className="status-message">
+                            <strong>Total Processing Time: </strong> {formatTime(totalProcessingTime)}
+                        </li>
+                    )}
                 </div>
             </ul>
         </div>
-        <DataDisplay data={data} showPopup={showPopup} setShowPopup={setShowPopup} />
-          <div className="prediction-cards-grid">
-          {renderMeanPredictionCard()}
-          {renderLinearRegressionCard()}
-          {renderKNNPredictionCard()}
-          {renderCorrelationCard()}
+        {/* <DataDisplay data={data} showPopup={showPopup} setShowPopup={setShowPopup} /> */}
+        {data && (
+            <>
+              <button className="btn" onClick={() => setShowPopup(true)}>Review Uploaded CSV - Cleaned & Tuned</button>
+              {showPopup && (
+                <div className="popup">
+                  <div className="popup-content">
+                    <button className="close-btn" onClick={() => setShowPopup(false)}>X</button>
+                    <h2>Uploaded CSV Data</h2>
+                    <table className="data-table">
+                        <thead>
+                        <tr>
+                            {Object.keys(data[0]).map((key, index) => (
+                            <th key={index}>{key}</th>
+                            ))}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {displayData.map((row, index) => (
+                            <tr key={index}>
+                                {Object.values(row).map((value, cellIndex) => (
+                                    <td key={cellIndex}>{value}</td>
+                                ))}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                    <div className="pagination-buttons">
+                      <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page <= 1}>
+                        Previous Page
+                      </button>
+                      <span>Page {page}</span>
+                      <button onClick={() => setPage(prev => prev + 1)} disabled={displayData.length < page * itemsPerPage || data.length <= page * itemsPerPage}>
+                        Next Page
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+                 <button className="btn" onClick={generateHeatmapData}>Generate Heatmap</button> {/* Heatmap Button */}
+            </>
+            )}
+        <div className="prediction-cards-grid">
+            {renderMeanPredictionCard()}
+            {renderLinearRegressionCard()}
+            {renderKNNPredictionCard()}
+            {renderCorrelationCard()}
         </div>
         {renderHeatmap()}
         <div>
-            <footer className='footer'>
+        <footer className='footer'>
                 <FeedbackForm />
             </footer>
         </div>

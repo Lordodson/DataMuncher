@@ -7,7 +7,7 @@ import About from "./about";
 import Advanced from "./Advanced";
 import PyEdit from "./PyEdit";
 import EducationalResource from "./EducationResource";
-import FeedbackForm from "./FeedbackForm"; // Import FeedbackForm
+import FeedbackForm from "./FeedbackForm";
 import PyAdvanced from "./PyAdvanced";
 import './App.css';
 
@@ -21,7 +21,7 @@ function Navbar({ theme, toggleTheme }) {
   if (shouldHideNavbar) return null;
 
   const handleLinkClick = () => {
-    setIsMenuOpen(false); // Close the menu when a link is clicked
+    setIsMenuOpen(false); 
   };
 
   return (
