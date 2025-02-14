@@ -506,7 +506,8 @@ p {
 .close-btn {
   position: sticky;
   top: 10px;
-  left: 1000px;
+
+  padding-right: 1000px;
   background: none;
   border: none;
   font-size: 20px;
@@ -774,8 +775,34 @@ pointer-events: none;
 
 .heatmap-container {
   width: 80%;   overflow-x: auto;
-  margin: 20px auto;    display: block; }
+  margin: 20px auto;    display: block; 
+}
+
 .d3-tooltip {
   font-family: sans-serif;
   pointer-events: none;
+}
+
+.imputation-details {
+  margin-top: 20px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.imputation-details table {
+   width: 100%;
+   border-collapse: collapse; 
+}
+
+.imputation-details th, .imputation-details td {
+   border: 1px solid #ddd; 
+   padding: 8px;
+   text-align: left;
+}
+
+.section-separator {
+  border-top: 1px solid #ccc; 
+  margin-top: 20px; 
+  padding-top: 20px;  
 }

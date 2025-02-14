@@ -37,7 +37,7 @@ const Dashboard = () => {
     const [showPopup, setShowPopup] = useState(false);
     const [displayData, setDisplayData] = useState([]);
     const [page, setPage] = useState(1);
-    const itemsPerPage = 50;
+    const [itemsPerPage] = useState(50);
     const [fileUploaded, setFileUploaded] = useState(false);
     const [duplicateRemovalComplete, setDuplicateRemovalComplete] = useState(false);
     const [missingValueHandlingComplete, setMissingValueHandlingComplete] = useState(false);
@@ -50,7 +50,7 @@ const Dashboard = () => {
     const [graphErrorMessage, setGraphErrorMessage] = useState("");
     const [summaryErrorMessage, setSummaryErrorMessage] = useState("");
     const fileInputRef = useRef(null);
-    const [isSpinning, setIsSpinning] = useState(false)
+    const [isSpinning, setIsSpinning] = useState(false);
 
     const [csvUploadTime, setCsvUploadTime] = useState(null);
     const [processingTimes, setProcessingTimes] = useState({
@@ -83,6 +83,8 @@ const Dashboard = () => {
         scatter: { xAxis: "" },
         radar: { xAxis: "" },
     });
+
+    const [selectedColumn, setSelectedColumn] = useState(''); 
 
     const SAMPLE_SIZE = 500;
 
@@ -118,6 +120,7 @@ const Dashboard = () => {
                     setMissingValueHandlingComplete(false);
                     setNumericColumnIdentificationComplete(false);
                     setExtractionOfNumericDataComplete(false);
+                    setSelectedColumn(''); 
 
                     setDuplicateCount(0);
                     setMissingValueCount(0);
@@ -169,208 +172,131 @@ const Dashboard = () => {
     }, [page, data, itemsPerPage]);
 
 
-
-
     useEffect(() => {
-        if (sampledData) {
-            setIsSpinning(true);
-            generateSummary(sampledData);
+        if (sampledData && selectedColumn) {
+            setIsSpinning(true); 
+            generateSummary(sampledData, selectedColumn);
             generateGraphs(sampledData);
-            setTimeout(() => setIsSpinning(false), 300);
-
+            setTimeout(() => setIsSpinning(false), 300); 
         }
-    }, [sampledData, removeDuplicates, handleMissingValues, identifyNumericColumns, extractNumericData, chartSelections]);
+    }, [sampledData, selectedColumn, removeDuplicates, handleMissingValues, identifyNumericColumns, extractNumericData, chartSelections]);
 
-    const generateSummary = (data) => {
-        if (data.length === 0) return;
-
-        let startTime;
-        let endTime;
-        let numDuplicatesRemoved = 0;
-        let numMissingValuesHandled = 0;
-        let numNumericColumns = 0;
-        let numExtractedValues = 0;
-
-        let uniqueData = data;
-        startTime = performance.now();
-        if (removeDuplicates) {
-            const originalLength = uniqueData.length;
-            uniqueData = _.uniqWith(data, _.isEqual);
-            numDuplicatesRemoved = originalLength - uniqueData.length
-            console.log("Duplicates removed");
-            console.log("Setting duplicateRemovalComplete to true");
-            setDuplicateRemovalComplete(true);
-        } else {
-            setDuplicateRemovalComplete(false);
-        }
-        endTime = performance.now();
-        setProcessingTimes(prev => ({ ...prev, duplicateRemoval: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
-        setDuplicateCount(numDuplicatesRemoved);
-
-        let cleanedData = uniqueData;
-        startTime = performance.now();
-        if (handleMissingValues) {
-            cleanedData = uniqueData.map(row => {
-                const cleanedRow = {};
-                for (const key in row) {
-                    if (row[key] == null || row[key] === '') {
-                        numMissingValuesHandled++;
-                        cleanedRow[key] = 'N/A';
-                    }
-                    else {
-                        cleanedRow[key] = row[key];
-                    }
-
-                }
-                return cleanedRow;
-            });
-            console.log("Missing values handled");
-            console.log("Setting missingValueHandlingComplete to true");
-            setMissingValueHandlingComplete(true);
-        } else {
-            setMissingValueHandlingComplete(false);
-        }
-        endTime = performance.now();
-        setProcessingTimes(prev => ({ ...prev, missingValueHandling: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
-        setMissingValueCount(numMissingValuesHandled);
-
-        const standardizedData = cleanedData;
-        console.log("Data formats standardized");
-        let numericColumns = [];
-
-        startTime = performance.now();
-        if (identifyNumericColumns) {
-            const columns = Object.keys(standardizedData[0]);
-            numericColumns = columns.filter(column => {
-                return standardizedData.every(row => {
-                    const value = row[column];
-                    return !isNaN(parseFloat(value)) && isFinite(value)
-                });
-            });
-            numNumericColumns = numericColumns.length;
-            console.log("Numeric columns identified:", numericColumns);
-            console.log("Setting numericColumnIdentificationComplete to true");
-            setNumericColumnIdentificationComplete(true);
-
-        } else {
-            setNumericColumnIdentificationComplete(false);
-        }
-        endTime = performance.now();
-        setProcessingTimes(prev => ({ ...prev, numericColumnIdentification: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
-        setNumericColumnCount(numNumericColumns);
-
-        let allNumericData = [];
-
-        startTime = performance.now();
-        if (extractNumericData) {
-            standardizedData.forEach(row => {
-                numericColumns.forEach(column => {
-                    const value = row[column];
-                    allNumericData.push(Number(value));
-                    numExtractedValues++
-                });
-            });
-            console.log("All numeric data:", allNumericData);
-            console.log("Setting extractionOfNumericDataComplete to true");
-            setExtractionOfNumericDataComplete(true);
-        } else {
-            setExtractionOfNumericDataComplete(false);
-        }
-        endTime = performance.now();
-        setProcessingTimes(prev => ({ ...prev, extractionOfNumericData: Math.max((endTime - startTime) / 1000, Number.EPSILON) }));
-        setExtractedValueCount(numExtractedValues);
-
-        if (!extractNumericData || !identifyNumericColumns) {
-            setSummaryErrorMessage("Data summary generation is not possible without the 'Identify Numeric Columns' and 'Extract Numeric Data' options turned on");
+    const generateSummary = (data, selectedColumn) => {
+        if (!data || data.length === 0) {
+            setSummaryErrorMessage("No data available.");
             setSummary(null);
             return;
-        } else {
-            setSummaryErrorMessage("");
         }
 
-        startTime = performance.now();
+        if (!selectedColumn) {
+            setSummaryErrorMessage("Please select a column to analyze.");
+            setSummary(null);
+            return;
+        }
 
-        const calculateMedian = (arr) => {
-            const sortedArr = arr.slice().sort((a, b) => a - b);
-            const mid = Math.floor(sortedArr.length / 2);
-            return sortedArr.length % 2 !== 0 ? sortedArr[mid] : (sortedArr[mid - 1] + sortedArr[mid]) / 2;
-        };
+        let startTime = performance.now();
 
-        const calculateMode = (arr) => {
-            const frequency = {};
-            arr.forEach(value => frequency[value] = (frequency[value] || 0) + 1);
-            const maxFreq = Math.max(...Object.values(frequency));
-            return Object.keys(frequency).filter(key => frequency[key] === maxFreq);
-        };
+        const columnData = data.map(row => row[selectedColumn]);
 
-        const calculateStandardDeviation = (arr) => {
-            const mean = _.mean(arr);
-            const squaredDiffs = arr.map(value => Math.pow(value - mean, 2));
-            return Math.sqrt(_.mean(squaredDiffs));
-        };
+        
+        const isNumericColumn = columnData.every(value => {
+            return !isNaN(parseFloat(value)) && isFinite(value);
+        });
 
-        const calculateVariance = (arr) => {
-            const mean = _.mean(arr);
-            const squaredDiffs = arr.map(value => Math.pow(value - mean, 2));
-            return _.mean(squaredDiffs);
-        };
+        let summary;
+
+        if (isNumericColumn) {
+            
+            const numericData = columnData.map(value => Number(value));
+
+            const calculateMedian = (arr) => {
+                const sortedArr = arr.slice().sort((a, b) => a - b);
+                const mid = Math.floor(sortedArr.length / 2);
+                return sortedArr.length % 2 !== 0 ? sortedArr[mid] : (sortedArr[mid - 1] + sortedArr[mid]) / 2;
+            };
+
+            const calculateMode = (arr) => {
+                const frequency = {};
+                arr.forEach(value => frequency[value] = (frequency[value] || 0) + 1);
+                const maxFreq = Math.max(...Object.values(frequency));
+                return Object.keys(frequency).filter(key => frequency[key] === maxFreq);
+            };
+
+            const calculateStandardDeviation = (arr) => {
+                const mean = _.mean(arr);
+                const squaredDiffs = arr.map(value => Math.pow(value - mean, 2));
+                return Math.sqrt(_.mean(squaredDiffs));
+            };
+
+            const calculateVariance = (arr) => {
+                const mean = _.mean(arr);
+                const squaredDiffs = arr.map(value => Math.pow(value - mean, 2));
+                return _.mean(squaredDiffs);
+            };
 
 
-        const calculateRange = (arr) => {
-            return _.max(arr) - _.min(arr);
-        };
+            const calculateRange = (arr) => {
+                return _.max(arr) - _.min(arr);
+            };
 
-        const calculateIQR = (arr) => {
-            const sortedArr = arr.slice().sort((a, b) => a - b);
-            const q1 = sortedArr[Math.floor(sortedArr.length / 4)];
-            const q3 = sortedArr[Math.floor(sortedArr.length * 3 / 4)];
-            return q3 - q1;
-        };
+            const calculateIQR = (arr) => {
+                const sortedArr = arr.slice().sort((a, b) => a - b);
+                const q1 = sortedArr[Math.floor(sortedArr.length / 4)];
+                const q3 = sortedArr[Math.floor(sortedArr.length * 3 / 4)];
+                return q3 - q1;
+            };
 
-        const calculateSkewness = (arr) => {
-            const mean = _.mean(arr);
-            const n = arr.length;
-            const m3 = _.mean(arr.map(value => Math.pow(value - mean, 3)));
-            const m2 = Math.pow(_.mean(arr.map(value => Math.pow(value - mean, 2))), 1.5);
-            return (n * m3) / ((n - 1) * (n - 2) * m2);
-        };
+            const calculateSkewness = (arr) => {
+                const mean = _.mean(arr);
+                const n = arr.length;
+                const m3 = _.mean(arr.map(value => Math.pow(value - mean, 3)));
+                const m2 = Math.pow(_.mean(arr.map(value => Math.pow(value - mean, 2))), 1.5);
+                return (n * m3) / ((n - 1) * (n - 2) * m2);
+            };
 
-        const calculateKurtosis = (arr) => {
-            const mean = _.mean(arr);
-            const n = arr.length;
-            const m4 = _.mean(arr.map(value => Math.pow(value - mean, 4)));
-            const m2 = Math.pow(_.mean(arr.map(value => Math.pow(value - mean, 2))), 2);
-            return (n * (n + 1) * m4) / ((n - 1) * (n - 2) * (n - 3) * m2) - (3 * Math.pow(n - 1, 2)) / ((n - 2) * (n - 3));
-        };
+            const calculateKurtosis = (arr) => {
+                const mean = _.mean(arr);
+                const n = arr.length;
+                const m4 = _.mean(arr.map(value => Math.pow(value - mean, 4)));
+                const m2 = Math.pow(_.mean(arr.map(value => Math.pow(value - mean, 2))), 2);
+                return (n * (n + 1) * m4) / ((n - 1) * (n - 2) * (n - 3) * m2) - (3 * Math.pow(n - 1, 2)) / ((n - 2) * (n - 3));
+            };
 
-        const summary = {
-            mean: allNumericData.length ? _.mean(allNumericData).toFixed(4) : 'N/A',
-            median: allNumericData.length ? calculateMedian(allNumericData).toFixed(4) : 'N/A',
-            mode: allNumericData.length ? calculateMode(allNumericData) : 'N/A',
-            standardDeviation: allNumericData.length ? calculateStandardDeviation(allNumericData).toFixed(4) : 'N/A',
-            variance: allNumericData.length ? calculateVariance(allNumericData).toFixed(4) : 'N/A',
-            range: allNumericData.length ? calculateRange(allNumericData).toFixed(4) : 'N/A',
-            iqr: allNumericData.length ? calculateIQR(allNumericData).toFixed(4) : 'N/A',
-            skewness: allNumericData.length ? calculateSkewness(allNumericData).toFixed(4) : 'N/A',
-            kurtosis: allNumericData.length ? calculateKurtosis(allNumericData).toFixed(4) : 'N/A',
-            min: allNumericData.length ? _.min(allNumericData).toFixed(4) : 'N/A',
-            max: allNumericData.length ? _.max(allNumericData).toFixed(4) : 'N/A',
-        };
+            summary = {
+                type: 'numerical', 
+                mean: numericData.length ? _.mean(numericData).toFixed(4) : 'N/A',
+                median: numericData.length ? calculateMedian(numericData).toFixed(4) : 'N/A',
+                mode: numericData.length ? calculateMode(numericData) : 'N/A',
+                standardDeviation: numericData.length ? calculateStandardDeviation(numericData).toFixed(4) : 'N/A',
+                variance: numericData.length ? calculateVariance(numericData).toFixed(4) : 'N/A',
+                range: numericData.length ? calculateRange(numericData).toFixed(4) : 'N/A',
+                iqr: numericData.length ? calculateIQR(numericData).toFixed(4) : 'N/A',
+                skewness: numericData.length ? calculateSkewness(numericData).toFixed(4) : 'N/A',
+                kurtosis: numericData.length ? calculateKurtosis(numericData).toFixed(4) : 'N/A',
+                min: numericData.length ? _.min(numericData).toFixed(4) : 'N/A',
+                max: numericData.length ? _.max(numericData).toFixed(4) : 'N/A',
+            };
+        } else {
+            
+            const valueCounts = _.countBy(columnData);
+            const uniqueValues = Object.keys(valueCounts);
+            const topValues = uniqueValues
+                .sort((a, b) => valueCounts[b] - valueCounts[a])
+                .slice(0, 5); 
 
-        const columns = Object.keys(standardizedData[0]);
-        const rowCount = standardizedData.length;
+            summary = {
+                type: 'categorical',  
+                uniqueCount: uniqueValues.length,
+                topValues: topValues.map(value => ({ value, count: valueCounts[value] })),
+            };
+        }
 
-        const overview = {
-            rowCount,
-            columnCount: columns.length,
-            summary,
-        };
-
-        endTime = performance.now();
+        let endTime = performance.now();
         setSummaryGenerationTime(Math.max((endTime - startTime) / 1000, Number.EPSILON));
 
-        setSummary(overview);
-        console.log("Summary generated:", overview);
+        setSummary(summary);
+        console.log("Summary generated:", summary);
+        setSummaryErrorMessage("");
     };
 
     const generateGraphs = (data) => {
@@ -652,36 +578,64 @@ const Dashboard = () => {
                         )}
                     </>
                 )}
-                {summaryErrorMessage && (
-                    <h2 className="error-message">{summaryErrorMessage}</h2>
-                )}
-                {summary && (
+
+                {data && (
                     <>
+                        <div style={{ paddingTop: '20px'}}>
                         <h2>Data Overview</h2>
-                        <div className="summary-grid">
-                            <SummaryCard title="Mean" value={summary.summary.mean ?? 'N/A'} icon={<FaChartBar />} tooltip="The mean is the average of all numeric values in the dataset." />
-                            <SummaryCard title="Median" value={summary.summary.median ?? 'N/A'} icon={<FaChartLine />} tooltip="The median is the middle value when all numeric values are sorted in order." />
-                            <SummaryCard title="Mode" value={summary.summary.mode ?? 'N/A'} icon={<FaChartPie />} tooltip="The mode is the most frequently occurring value in the dataset." />
-                            <SummaryCard title="Standard Deviation" value={summary.summary.standardDeviation ?? 'N/A'} icon={<FaChartArea />} tooltip="Standard deviation measures the amount of variation or dispersion in the dataset." />
-                            <SummaryCard title="Variance" value={summary.summary.variance ?? 'N/A'} icon={<FaChartBar />} tooltip="Variance is the average of the squared differences from the mean." />
-                            <SummaryCard title="Range" value={summary.summary.range ?? 'N/A'} icon={<FaChartLine />} tooltip="The range is the difference between the maximum and minimum values in the dataset." />
-                            <SummaryCard title="IQR" value={summary.summary.iqr ?? 'N/A'} icon={<FaChartPie />} tooltip="The interquartile range (IQR) is the range between the first quartile (Q1) and the third quartile (Q3)." />
-                            <SummaryCard title="Skewness" value={summary.summary.skewness ?? 'N/A'} icon={<FaChartArea />} tooltip="Skewness measures the asymmetry of thedistribution of values in the dataset." />
-                            <SummaryCard title="Kurtosis" value={summary.summary.kurtosis ?? 'N/A'} icon={<FaChartBar />} tooltip="Kurtosis measures the 'tailedness' of the distribution of values in the dataset." />
-                            <SummaryCard title="Min" value={summary.summary.min ?? 'N/A'} icon={<FaChartLine />} tooltip="The minimum value is the smallest numeric value in the dataset." />
-                            <SummaryCard title="Max" value={summary.summary.max ?? 'N/A'} icon={<FaChartPie />} tooltip="The maximum value is the largest numeric value in the dataset." />
+                            <label htmlFor="columnSelect">Select Column:</label>
+                            <select id="columnSelect" value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)}>
+                                <option value="">-- Select a Column --</option>
+                                {data[0] && Object.keys(data[0]).map((columnName) => (
+                                    <option key={columnName} value={columnName}>{columnName}</option>
+                                ))}
+                            </select>
                         </div>
+                        {summaryErrorMessage && (
+                            <h2 className="error-message">{summaryErrorMessage}</h2>
+                        )}
+                        {summary && (
+                            <>
+                                {summary.type === 'numerical' ? (
+                                    <div className="summary-grid">
+                                        <SummaryCard title="Mean" value={summary.mean ?? 'N/A'} icon={<FaChartBar />} tooltip="The mean is the average of all numeric values." />
+                                        <SummaryCard title="Median" value={summary.median ?? 'N/A'} icon={<FaChartLine />} tooltip="The median is the middle value." />
+                                        <SummaryCard title="Mode" value={summary.mode ?? 'N/A'} icon={<FaChartPie />} tooltip="The mode is the most frequent value." />
+                                        <SummaryCard title="Standard Deviation" value={summary.standardDeviation ?? 'N/A'} icon={<FaChartArea />} tooltip="Standard deviation measures the amount of variation or dispersion." />
+                                        <SummaryCard title="Variance" value={summary.variance ?? 'N/A'} icon={<FaChartBar />} tooltip="Variance measures the spread of data around the mean." />
+                                        <SummaryCard title="Range" value={summary.range ?? 'N/A'} icon={<FaChartLine />} tooltip="The range is the difference between the highest and lowest values." />
+                                        <SummaryCard title="IQR" value={summary.iqr ?? 'N/A'} icon={<FaChartPie />} tooltip="The interquartile range is the range of the middle 50% of the data." />
+                                        <SummaryCard title="Skewness" value={summary.skewness ?? 'N/A'} icon={<FaChartArea />} tooltip="Skewness measures the asymmetry of the data distribution." />
+                                        <SummaryCard title="Kurtosis" value={summary.kurtosis ?? 'N/A'} icon={<FaChartBar />} tooltip="Kurtosis measures the 'tailedness' of the data distribution." />
+                                        <SummaryCard title="Min" value={summary.min ?? 'N/A'} icon={<FaChartLine />} tooltip="The minimum value." />
+                                        <SummaryCard title="Max" value={summary.max ?? 'N/A'} icon={<FaChartPie />} tooltip="The maximum value." />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <p>Unique Value Count: {summary.uniqueCount}</p>
+                                        <p>Top Values:</p>
+                                        <ul>
+                                            {summary.topValues.map((item) => (
+                                                <li key={item.value}>{item.value}: {item.count}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
 
-
-                        {/* PDF Export Button */}
-                        <PDFDownloadLink
-                            document={<SummaryPDF summary={summary.summary} />}
-                            fileName="data-summary.pdf"
-                        >
-                            {({ loading }) => (loading ? 'Loading PDF...' : 'Download PDF')}
-                        </PDFDownloadLink>
+                                {/* PDF Export Button */}
+                                <PDFDownloadLink
+                                    document={<SummaryPDF summary={summary} />}
+                                    fileName="data-summary.pdf"
+                                >
+                                    {({ loading }) => (loading ? 'Loading PDF...' : 'Download PDF')}
+                                </PDFDownloadLink>
+                            </>
+                        )}
                     </>
                 )}
+
+                <div className="section-separator"></div>
+
                 {data && (
                     <div className="pivot-table-container">
                         <h2>Interactive Pivot Table</h2>

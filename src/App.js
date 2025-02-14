@@ -76,12 +76,12 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
-    console.log(`Theme set to: ${theme}`); // Debugging log
+    console.log(`Theme set to: ${theme}`); 
   }, [theme]);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
-    console.log(`Theme toggled to: ${theme === 'light' ? 'dark' : 'light'}`); // Debugging log
+    console.log(`Theme toggled to: ${theme === 'light' ? 'dark' : 'light'}`); 
   };
 
   return (
