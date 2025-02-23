@@ -2,6 +2,8 @@
 A react web app that imports data and automatically generates insights and visualizations.
 By Cody Dodson for CSMS
 
+[DataMuncher Capstone Project Demonstration Video](https://youtu.be/PE-de4Zmvxw)
+
 ############################
 ## What you need to know...
 ############################
